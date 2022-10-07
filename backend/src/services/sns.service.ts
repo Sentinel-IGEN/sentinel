@@ -4,9 +4,7 @@ import { Credentials } from '@aws-sdk/types';
 
 @Injectable()
 export class SNSService implements OnApplicationBootstrap {
-  private sns = new SNSClient({
-    region: 'us-west-2',
-  });
+  private sns = new SNSClient({});
 
   onApplicationBootstrap() {
     console.log('Initializing AWS SDK');
