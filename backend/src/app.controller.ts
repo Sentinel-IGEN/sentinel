@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { SNSService } from './services/sns.service';
 
@@ -12,5 +12,16 @@ export class AppController {
   @Get(['/health', ''])
   health(): string {
     return this.appService.getHealth();
+  }
+
+  // PLACEHOLDER FOR TESTING
+  @Post('/test/topic/:topicId')
+  async createTopic(@Param() params): Promise<string> {
+    try {
+      const TopicARN = await this.SNSService.createTopic(params.topicId);
+      return TopicARN;
+    } catch (err) {
+      return err;
+    }
   }
 }

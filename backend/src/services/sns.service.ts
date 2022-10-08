@@ -1,12 +1,19 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { SNSClient } from '@aws-sdk/client-sns';
-import { Credentials } from '@aws-sdk/types';
+import { Injectable } from '@nestjs/common';
+import { SNSClient, CreateTopicCommand } from '@aws-sdk/client-sns';
 
 @Injectable()
-export class SNSService implements OnApplicationBootstrap {
+export class SNSService {
   private sns = new SNSClient({});
 
-  onApplicationBootstrap() {
-    console.log('Initializing AWS SDK');
+  // Create Topic
+  // Params: topicName, should be unique
+  // Returns AWS ARN of topic
+  async createTopic(topicName: string): Promise<string> {
+    const command = new CreateTopicCommand({
+      Name: topicName,
+    });
+
+    const response = await this.sns.send(command);
+    return response.TopicArn;
   }
 }
