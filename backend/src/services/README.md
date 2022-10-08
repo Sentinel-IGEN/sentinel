@@ -1,1 +1,1 @@
-Should be used for shared an reusable services.
+Should be used for shared/reusable services.
