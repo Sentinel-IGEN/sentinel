@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { SNSClient, CreateTopicCommand } from '@aws-sdk/client-sns';
+import {
+  SNSClient,
+  CreateTopicCommand,
+  CreatePlatformEndpointCommand,
+} from '@aws-sdk/client-sns';
 
 @Injectable()
 export class SNSService {
@@ -8,6 +12,7 @@ export class SNSService {
   // Create Topic
   // Params: topicName, should be unique
   // Returns AWS ARN of topic
+  // Not currently used in production
   async createTopic(topicName: string): Promise<string> {
     const command = new CreateTopicCommand({
       Name: topicName,
@@ -15,5 +20,21 @@ export class SNSService {
 
     const response = await this.sns.send(command);
     return response.TopicArn;
+  }
+
+  // Create platform endpoint
+  // Params: platformApplicationArn, mobile device token
+  // Returns AWS ARN of endpoint
+  async createEndpoint(
+    platformApplicationArn: string,
+    deviceToken,
+  ): Promise<string> {
+    const command = new CreatePlatformEndpointCommand({
+      PlatformApplicationArn: platformApplicationArn,
+      Token: deviceToken,
+    });
+
+    const response = await this.sns.send(command);
+    return response.EndpointArn;
   }
 }
