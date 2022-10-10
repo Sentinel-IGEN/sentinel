@@ -32,7 +32,7 @@ export class AppController {
   async registerDevice(@Param() params): Promise<User> {
     try {
       return this.MongoService.createUser({
-        embeddedDevice: params.deviceUUID,
+        embeddedDeviceUUID: params.deviceUUID,
       });
     } catch (err) {
       return err;
