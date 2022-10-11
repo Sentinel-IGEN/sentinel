@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, Param, Body, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { SNSService, MongoService } from './services';
 import { User } from './schemas/User.schema';
+import { RegisterDeviceDTO } from './schemas/dtos';
 
 @Controller()
 export class AppController {
@@ -28,12 +29,12 @@ export class AppController {
   }
 
   // Register embedded device using device UUID
-  @Post('/device/register/:deviceUUID')
-  async registerDevice(@Param() params): Promise<User> {
+  @Post('/device/register')
+  async registerDevice(
+    @Body() registerDeviceDTO: RegisterDeviceDTO,
+  ): Promise<User> {
     try {
-      return this.MongoService.createUser({
-        embeddedDeviceUUID: params.deviceUUID,
-      });
+      return this.MongoService.createUser(registerDeviceDTO);
     } catch (err) {
       return err;
     }
