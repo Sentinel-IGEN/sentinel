@@ -8,7 +8,9 @@ export class MongoService implements OnApplicationBootstrap {
 
   onApplicationBootstrap() {
     // Connect to MongoDB on application bootstrap
-    mongoose.connect(process.env.DB_URL);
+    mongoose.connect(process.env.DB_URL, {
+      autoIndex: true,
+    });
     mongoose.connection.once('open', () => {
       console.log('MongoDB connection established');
     });
