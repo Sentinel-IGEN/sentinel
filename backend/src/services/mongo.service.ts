@@ -1,11 +1,17 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import mongoose from 'mongoose';
 import { UserMongooseSchema } from '../schemas/User.schema';
-import { RegisterDeviceDTO } from 'src/schemas/dtos';
+import { EmbeddedDeviceMongooseSchema } from '../schemas/EmbeddedDevice.schema';
+import { CreateDeviceDTO } from 'src/schemas/dtos';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class MongoService implements OnApplicationBootstrap {
   private User = mongoose.model('User', UserMongooseSchema);
+  private EmbeddedDevice = mongoose.model(
+    'EmbeddedDevice',
+    EmbeddedDeviceMongooseSchema,
+  );
 
   onApplicationBootstrap() {
     // Connect to MongoDB on application bootstrap
@@ -17,17 +23,36 @@ export class MongoService implements OnApplicationBootstrap {
     });
   }
 
-  // Create User method, automatically hashes embeddedDeviceUUID before storing in DB
-  async createUser(userData: RegisterDeviceDTO) {
+  // Create device method, automatically hashes token before storing in DB
+  async createEmbeddedDevice(deviceData: CreateDeviceDTO) {
+    // Generate salted hash for deviceTokenHash here
+    const tokenHash = await bcrypt.hash(deviceData.token, 10);
 
-    // Should enerate salted hash for embeddedDeviceUUID here and enter in place of embeddedDeviceUUID
-
-    const newUser = new this.User({
-      embeddedDeviceUUIDHash: userData.embeddedDeviceUUID,
-      ...userData,
+    const newDevice = new this.EmbeddedDevice({
+      tokenHash,
+      ...deviceData,
     });
-    const data = await newUser.save();
+    const data = await newDevice.save();
 
     return data;
+  }
+
+  // Get device by uuid
+  async getEmbeddedDevice(uuid: string) {
+    const data = await this.EmbeddedDevice.findOne({ uuid });
+    return data;
+  }
+
+  // Authenticate device token
+  // returns true if device token is correct and false otherwise
+  async authEmbeddedDevice(deviceData: CreateDeviceDTO) {
+    let match = false;
+
+    const device = await this.EmbeddedDevice.findOne({ uuid: deviceData.uuid });
+    if (device) {
+      match = await bcrypt.compare(deviceData.token, device.tokenHash);
+    }
+
+    return match;
   }
 }

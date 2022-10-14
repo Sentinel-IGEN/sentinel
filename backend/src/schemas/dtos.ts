@@ -1,6 +1,5 @@
-export class RegisterDeviceDTO {
-  embeddedDeviceUUID: string;
-  mobileDeviceToken?: string;
-  endpointARN?: string;
-  phoneNumber?: string;
+export class CreateDeviceDTO {
+  uuid: string; // hardware uuid to uniquely identify device, created on physical device creation
+  token: string // token for authorizing endpoint consumption by the embedded device
+  userId?: string // user uuid to relate to User object in DB
 }
