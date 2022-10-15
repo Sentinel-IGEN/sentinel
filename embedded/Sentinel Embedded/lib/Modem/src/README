@@ -1,0 +1,5 @@
+# Helper functions For ESP32 Modem
+
+Includes helper functions for:
+- Enabling/ disabling GPS
+- Turning on/off and restarting the modem
