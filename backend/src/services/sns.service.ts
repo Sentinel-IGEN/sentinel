@@ -13,7 +13,7 @@ export class SNSService {
   // Params: topicName, should be unique
   // Returns AWS ARN of topic
   // Not currently used in production
-  async createTopic(topicName: string): Promise<string> {
+  async createTopic(topicName: string): Promise<string | undefined> {
     const command = new CreateTopicCommand({
       Name: topicName,
     });
@@ -28,7 +28,7 @@ export class SNSService {
   async createEndpoint(
     platformApplicationArn: string,
     deviceToken,
-  ): Promise<string> {
+  ): Promise<string | undefined> {
     const command = new CreatePlatformEndpointCommand({
       PlatformApplicationArn: platformApplicationArn,
       Token: deviceToken,

@@ -1,8 +1,8 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import mongoose from 'mongoose';
-import { UserMongooseSchema } from '../schemas/User.schema';
-import { EmbeddedDeviceMongooseSchema } from '../schemas/EmbeddedDevice.schema';
-import { CreateDeviceDTO } from 'src/schemas/dtos';
+import { UserMongooseSchema, User } from '../schemas/User.schema';
+import { EmbeddedDeviceMongooseSchema, EmbeddedDevice } from '../schemas/EmbeddedDevice.schema';
+import { CreateDeviceDTO, UpdateDeviceDTO } from 'src/schemas/dtos';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -25,21 +25,59 @@ export class MongoService implements OnApplicationBootstrap {
 
   // Create device method, automatically hashes token before storing in DB
   async createEmbeddedDevice(deviceData: CreateDeviceDTO) {
+    const { token, ...device } = deviceData;
+
     // Generate salted hash for deviceTokenHash here
-    const tokenHash = await bcrypt.hash(deviceData.token, 10);
+    const tokenHash = await bcrypt.hash(token, 10);
 
     const newDevice = new this.EmbeddedDevice({
       tokenHash,
-      ...deviceData,
+      ...device,
     });
     const data = await newDevice.save();
 
     return data;
   }
 
+  async updateEmbeddedDevice(deviceData: UpdateDeviceDTO) {
+    const { token, ...device } = deviceData;
+    let tokenHash: string | undefined;
+
+    // Generate salted hash for deviceTokenHash here if token is supplied
+    if (token) {
+      tokenHash = await bcrypt.hash(token, 10);
+    }
+
+    // Define the filter using the uuid supplied
+    const filter = { uuid: device.uuid };
+
+    let data: EmbeddedDevice | null;
+    // If tokenHash exists, update device data with it.
+    if (tokenHash) {
+      data = await this.EmbeddedDevice.findOneAndUpdate(
+        filter,
+        {
+          tokenHash,
+          ...device,
+        },
+        {
+          // new flag so the updated device is returned instead of old
+          new: true,
+        },
+      );
+    // If tokenHash doesnt exist, update device using the rest of the data not including tokenHash
+    } else {
+      data = await this.EmbeddedDevice.findOneAndUpdate(filter, device, {
+        new: true,
+      });
+    }
+
+    return data;
+  }
+
   // Get device by uuid
   async getEmbeddedDevice(uuid: string) {
-    const data = await this.EmbeddedDevice.findOne({ uuid });
+    const data: EmbeddedDevice | null = await this.EmbeddedDevice.findOne({ uuid });
     return data;
   }
 
@@ -54,5 +92,12 @@ export class MongoService implements OnApplicationBootstrap {
     }
 
     return match;
+  }
+
+  async createUser(userData: User) {
+    const newUser = new this.User(userData);
+    const data: User = await newUser.save();
+
+    return data;
   }
 }
