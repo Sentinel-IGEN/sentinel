@@ -16,13 +16,13 @@ TinyGsm modem(debugger);
 TinyGsm modem(SerialAT);
 #endif
 
-#define PHONE_NUMBER "+16049109482"
+#define PHONE_NUMBER ""
 
 void setup()
 {
     SerialMon.begin(115200);
     delay(10);
-    modemPowerOn();
+    Modem::modemPowerOn();
 
     SerialAT.begin(UART_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
 
@@ -30,6 +30,11 @@ void setup()
     Serial.println("SMS Tester");
     Serial.println("This will send a single message to the targeted phone number.");
     Serial.println("/**********************************************************/\n\n");
+
+    if (String(PHONE_NUMBER).length() == 0)
+    {
+        Serial.println("Please insert a phone number for this test!!!");
+    }
 
     delay(10000);
 }
@@ -39,7 +44,7 @@ void loop()
     if (!modem.testAT())
     {
         Serial.println("Failed to restart modem, attempting to continue without restarting");
-        modemRestart();
+        Modem::modemRestart();
         return;
     }
 

@@ -23,7 +23,7 @@ void setup()
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, HIGH); // Set LED OFF
 
-    modemPowerOn();
+    Modem::initialize(modem);
 
     SerialAT.begin(UART_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
 
@@ -37,17 +37,10 @@ void setup()
 
 void loop()
 {
-    if (!modem.testAT())
-    {
-        Serial.println("Failed to restart modem, attempting to continue without restarting");
-        modemRestart();
-        return;
-    }
-
     Serial.println("Start positioning . Make sure to locate outdoors.");
     Serial.println("The blue indicator light flashes to indicate positioning.");
 
-    enableGPS(modem);
+    Modem::enableGPS(modem);
 
     Serial.println("Waiting for network connection...");
     modem.setNetworkMode(2);
@@ -73,7 +66,7 @@ void loop()
         delay(2000);
     }
 
-    disableGPS(modem);
+    Modem::disableGPS(modem);
 
     Serial.println("/**********************************************************/");
     Serial.println("After the network test is complete, please enter the  ");

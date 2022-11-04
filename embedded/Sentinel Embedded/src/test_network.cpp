@@ -1,5 +1,4 @@
 #include <Modem.h>
-
 #include <SPI.h>
 #include <Ticker.h>
 
@@ -11,10 +10,6 @@ TinyGsm modem(debugger);
 TinyGsm modem(SerialAT);
 #endif
 
-#define UART_BAUD 9600
-#define PIN_DTR 25
-#define PIN_TX 27
-#define PIN_RX 26
 #define LED_PIN 12
 
 void setup()
@@ -23,64 +18,17 @@ void setup()
   delay(10);
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH); // Set LED OFF
-  modemPowerOn();
+  Modem::modemPowerOn();
   SerialAT.begin(UART_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
 
-  Serial.println("/**********************************************************/");
-  Serial.println("To initialize the network test, please make sure your LTE ");
-  Serial.println("antenna has been connected to the SIM interface on the board.");
-  Serial.println("/**********************************************************/\n\n");
-
   delay(10000);
+
+  Serial.println("========INIT========");
+  Modem::collectDiagnosisData(modem);
 }
 
 void loop()
 {
-  String res;
-  Serial.println("========INIT========");
-
-  if (!modem.init())
-  {
-    modemRestart();
-    delay(2000);
-    Serial.println("Failed to restart modem, attempting to continue without restarting");
-    return;
-  }
-
-  Serial.println("========SIMCOMATI======");
-  modem.sendAT("+SIMCOMATI");
-  modem.waitResponse(1000L, res);
-  res.replace(GSM_NL "OK" GSM_NL, "");
-  Serial.println(res);
-  res = "";
-  Serial.println("=======================");
-
-  Serial.println("=====Preferred mode selection=====");
-  modem.sendAT("+CNMP?");
-  if (modem.waitResponse(1000L, res) == 1)
-  {
-    res.replace(GSM_NL "OK" GSM_NL, "");
-    Serial.println(res);
-  }
-  res = "";
-  Serial.println("=======================");
-
-  Serial.println("=====Preferred selection between CAT-M and NB-IoT=====");
-  modem.sendAT("+CMNB?");
-  if (modem.waitResponse(1000L, res) == 1)
-  {
-    res.replace(GSM_NL "OK" GSM_NL, "");
-    Serial.println(res);
-  }
-  res = "";
-  Serial.println("=======================");
-
-  String name = modem.getModemName();
-  Serial.println("Modem Name: " + name);
-
-  String modemInfo = modem.getModemInfo();
-  Serial.println("Modem Info: " + modemInfo);
-
   for (int i = 0; i <= 4; i++)
   {
     uint8_t network[] = {
@@ -103,8 +51,17 @@ void loop()
       Serial.print("isNetworkConnected: ");
       isConnected = modem.isNetworkConnected();
       Serial.println(isConnected ? "CONNECTED" : "NOT CONNECTED");
+
       if (isConnected)
       {
+        if (modem.gprsConnect(apn))
+        {
+          Serial.println("GPRS connect successful");
+        }
+        else
+        {
+          Serial.println("GPRS connect NOT successful");
+        }
         break;
       }
       delay(1000);
@@ -118,31 +75,10 @@ void loop()
   digitalWrite(LED_PIN, HIGH);
 
   Serial.println();
-  Serial.println("Device is connected .");
+  Serial.println("Device is connected!");
   Serial.println();
-
-  Serial.println("=====Inquiring UE system information=====");
-  modem.sendAT("+CPSI?");
-  if (modem.waitResponse(1000L, res) == 1)
-  {
-    res.replace(GSM_NL "OK" GSM_NL, "");
-    Serial.println(res);
-  }
-
-  Serial.println("/**********************************************************/");
-  Serial.println("After the network test is complete, please enter the  ");
-  Serial.println("AT command in the serial terminal.");
-  Serial.println("/**********************************************************/\n\n");
 
   while (1)
   {
-    while (SerialAT.available())
-    {
-      SerialMon.write(SerialAT.read());
-    }
-    while (SerialMon.available())
-    {
-      SerialAT.write(SerialMon.read());
-    }
   }
 }
