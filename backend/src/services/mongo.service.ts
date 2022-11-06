@@ -1,7 +1,14 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Injectable,
+  OnApplicationBootstrap,
+  HttpException,
+} from '@nestjs/common';
 import mongoose from 'mongoose';
 import { UserMongooseSchema, User } from '../schemas/User.schema';
-import { EmbeddedDeviceMongooseSchema, EmbeddedDevice } from '../schemas/EmbeddedDevice.schema';
+import {
+  EmbeddedDeviceMongooseSchema,
+  EmbeddedDevice,
+} from '../schemas/EmbeddedDevice.schema';
 import { CreateDeviceDTO, UpdateDeviceDTO } from 'src/schemas/dtos';
 import * as bcrypt from 'bcrypt';
 
@@ -23,9 +30,17 @@ export class MongoService implements OnApplicationBootstrap {
     });
   }
 
+  /******  EMBEDDED DEVICE CRUD OPERATIONS ******/
+
   // Create device method, automatically hashes token before storing in DB
-  async createEmbeddedDevice(deviceData: CreateDeviceDTO) {
+  async createEmbeddedDevice(
+    deviceData: CreateDeviceDTO,
+  ): Promise<EmbeddedDevice> {
     const { token, ...device } = deviceData;
+
+    if (token === undefined) {
+      throw new HttpException('Device token field is required', 400);
+    }
 
     // Generate salted hash for deviceTokenHash here
     const tokenHash = await bcrypt.hash(token, 10);
@@ -40,6 +55,7 @@ export class MongoService implements OnApplicationBootstrap {
   }
 
   async updateEmbeddedDevice(deviceData: UpdateDeviceDTO) {
+    console.log("updateEmbeddedDevice called with payload: ", deviceData)
     const { token, ...device } = deviceData;
     let tokenHash: string | undefined;
 
@@ -65,7 +81,7 @@ export class MongoService implements OnApplicationBootstrap {
           new: true,
         },
       );
-    // If tokenHash doesnt exist, update device using the rest of the data not including tokenHash
+      // If tokenHash doesnt exist, update device using the rest of the data not including tokenHash
     } else {
       data = await this.EmbeddedDevice.findOneAndUpdate(filter, device, {
         new: true,
@@ -77,7 +93,9 @@ export class MongoService implements OnApplicationBootstrap {
 
   // Get device by uuid
   async getEmbeddedDevice(uuid: string) {
-    const data: EmbeddedDevice | null = await this.EmbeddedDevice.findOne({ uuid });
+    const data: EmbeddedDevice | null = await this.EmbeddedDevice.findOne({
+      uuid,
+    });
     return data;
   }
 
@@ -94,10 +112,39 @@ export class MongoService implements OnApplicationBootstrap {
     return match;
   }
 
-  async createUser(userData: User) {
-    const newUser = new this.User(userData);
-    const data: User = await newUser.save();
+  /******  USER CRUD OPERATIONS  ******/
 
-    return data;
+  async createUser(userData: User) {
+    // Embedded device must exist to create user
+    const device: EmbeddedDevice | null = await this.EmbeddedDevice.findOne({
+      uuid: userData.embeddedDeviceId,
+    });
+
+    if (device === null) {
+      throw new HttpException(
+        'Could not find device with supplied embeddedDeviceId',
+        404,
+      );
+    }
+
+    // create new user
+    const newUser = new this.User(userData);
+    const data = await newUser.save();
+
+    // update device with the created userId
+    const updatedDevice = await this.updateEmbeddedDevice({
+      uuid: device.uuid,
+      userId: data._id,
+    });
+
+    // if new user's id does not match the updated device's userId, then return error
+    if (data._id.toString() === updatedDevice?.userId?.toString()) {
+      return data;
+    } else {
+      throw new HttpException(
+        'User created, but embedded device document not updated to link the userId field',
+        500,
+      );
+    }
   }
 }
