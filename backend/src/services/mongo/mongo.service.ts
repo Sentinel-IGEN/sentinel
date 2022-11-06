@@ -4,11 +4,11 @@ import {
   HttpException,
 } from '@nestjs/common';
 import mongoose from 'mongoose';
-import { UserMongooseSchema, User } from '../schemas/User.schema';
+import { UserMongooseSchema, User } from '../../schemas/User.schema';
 import {
   EmbeddedDeviceMongooseSchema,
   EmbeddedDevice,
-} from '../schemas/EmbeddedDevice.schema';
+} from '../../schemas/EmbeddedDevice.schema';
 import { CreateDeviceDTO, UpdateDeviceDTO } from 'src/schemas/dtos';
 import * as bcrypt from 'bcrypt';
 
