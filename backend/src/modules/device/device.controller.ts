@@ -11,6 +11,7 @@ export class DeviceController {
   ) {}
 
   // Create embedded device using device UUID
+  // TODO: Require server key to call this endpoint
   @Post('')
   async registerDevice(
     @Body() createDeviceDTO: CreateDeviceDTO,
