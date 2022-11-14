@@ -3,7 +3,7 @@ import {
   OnApplicationBootstrap,
   HttpException,
 } from '@nestjs/common';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { UserMongooseSchema, User } from '../../schemas/User.schema';
 import {
   EmbeddedDeviceMongooseSchema,
@@ -55,7 +55,7 @@ export class MongoService implements OnApplicationBootstrap {
   }
 
   async updateEmbeddedDevice(deviceData: UpdateDeviceDTO) {
-    console.log("updateEmbeddedDevice called with payload: ", deviceData)
+    console.log('updateEmbeddedDevice called with payload: ', deviceData);
     const { token, ...device } = deviceData;
     let tokenHash: string | undefined;
 
@@ -146,5 +146,27 @@ export class MongoService implements OnApplicationBootstrap {
         500,
       );
     }
+  }
+
+  // Get user by uuid
+  async getUser(userId: Types.ObjectId) {
+    const data: User | null = await this.User.findById(userId);
+    return data;
+  }
+
+  // Update user by uuid
+  async updateUser(userId: Types.ObjectId, userData: Partial<User>) {
+    console.log(`updateUser for id:${userId} called with payload: ${userData}`);
+
+    const data: User | null = await this.EmbeddedDevice.findByIdAndUpdate(
+      userId,
+      userData,
+      {
+        // new flag so the updated device is returned instead of old
+        new: true,
+      },
+    );
+
+    return data;
   }
 }
