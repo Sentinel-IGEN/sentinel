@@ -15,4 +15,5 @@ export interface UpdateDeviceDTO {
 export interface RegisterMobileDeviceTokenDTO {
   userId: Types.ObjectId;
   deviceToken: string;
+  type: "iOS" | "Android"
 }

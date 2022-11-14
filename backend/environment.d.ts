@@ -5,6 +5,7 @@ declare global {
       AWS_SECRET_ACCESS_KEY: string;
       AWS_REGION: string;
       AWS_SNS_ANDROID_PUSH_ARN: string;
+      AWS_SNS_IOS_PUSH_ARN: string;
       DB_URL: string;
     }
   }

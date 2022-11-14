@@ -37,4 +37,12 @@ export class SNSService {
     const response = await this.sns.send(command);
     return response.EndpointArn;
   }
+
+  getPlatformApplicationARNByOS(os: 'iOS' | 'Android') {
+    if (os === 'iOS') {
+      return process.env.AWS_SNS_IOS_PUSH_ARN;
+    } else if (os === 'Android') {
+      return process.env.AWS_SNS_ANDROID_PUSH_ARN;
+    }
+  }
 }
