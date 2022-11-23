@@ -21,6 +21,7 @@ export default function PushNotifications() {
     // This listener is fired whenever a notification is received while the app is foregrounded
     const notificationListener = Notifications.addNotificationReceivedListener(notification => {
       setNotification(notification);
+      console.log(notification);
     });
 
     // This listener is fired whenever a user taps on or interacts with a notification (works when app is foregrounded, backgrounded, or killed)

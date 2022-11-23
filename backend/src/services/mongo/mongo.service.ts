@@ -158,7 +158,7 @@ export class MongoService implements OnApplicationBootstrap {
   async updateUser(userId: Types.ObjectId, userData: Partial<User>) {
     console.log(`updateUser for id:${userId} called with payload: ${userData}`);
 
-    const data: User | null = await this.EmbeddedDevice.findByIdAndUpdate(
+    const data: User | null = await this.User.findByIdAndUpdate(
       userId,
       userData,
       {
