@@ -19,11 +19,13 @@ TinyGsm modem(SerialAT);
 void setup()
 {
     SerialMon.begin(115200); // Set console baud rate
+
     delay(10);
+
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, HIGH); // Set LED OFF
 
-    Modem::initialize(modem);
+    Modem::modemPowerOn();
 
     SerialAT.begin(UART_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
 
@@ -37,19 +39,17 @@ void setup()
 
 void loop()
 {
+    if (!modem.testAT()) {
+        Serial.println("Failed to restart modem, attempting to continue without restarting");
+        Modem::modemRestart();
+        return;
+    }
+
     Serial.println("Start positioning . Make sure to locate outdoors.");
     Serial.println("The blue indicator light flashes to indicate positioning.");
 
     Modem::enableGPS(modem);
 
-    Serial.println("Waiting for network connection...");
-    modem.setNetworkMode(2);
-    delay(3000);
-    while (!modem.isNetworkConnected())
-    {
-        delay(1000);
-        Serial.println("Waiting for network to be connected...");
-    }
     float lat, lon;
     while (1)
     {

@@ -6,7 +6,7 @@
 
 // Set serial for AT commands (to the module)
 #define SerialAT Serial1
-#define TINY_GSM_MODEM_SIM7000
+#define TINY_GSM_MODEM_SIM7000SSL
 #define TINY_GSM_RX_BUFFER 1024 // Set RX buffer to 1Kb
 
 #define UART_BAUD 9600
@@ -34,7 +34,7 @@ namespace Modem
     void collectDiagnosisData(TinyGsm modem);
     void requestUEInfo(TinyGsm modem);
     void initialize(TinyGsm modem);
-    void checkConnection(TinyGsm modem);
+    bool checkConnection(TinyGsm modem);
 }
 
 #endif

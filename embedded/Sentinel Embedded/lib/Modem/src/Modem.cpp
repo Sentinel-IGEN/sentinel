@@ -134,18 +134,18 @@ namespace Modem
         while (!modem.gprsConnect(apn))
         {
             SerialMon.println("Failed to connect via GPRS, retrying...");
-            Serial.print("Signal Quality: " + String(modem.getSignalQuality()));
+            Serial.println("Signal Quality: " + String(modem.getSignalQuality()));
         }
         SerialMon.println("Connection success!");
 
-        SerialMon.print("Modem Info: " + modem.getModemInfo());
+        SerialMon.println("Modem Info: " + modem.getModemInfo());
         requestUEInfo(modem);
     }
 
     /*
      * Checks connection status, attempts to reconnect on failure.
      */
-    void checkConnection(TinyGsm modem)
+    bool checkConnection(TinyGsm modem)
     {
         // Make sure we're still registered on the network
         if (!modem.isNetworkConnected())
@@ -155,8 +155,9 @@ namespace Modem
             {
                 SerialMon.println("Network failure...");
                 delay(10000);
-                return;
+                return false;
             }
+
             if (modem.isNetworkConnected())
             {
                 SerialMon.println("Network re-connected");
@@ -165,15 +166,16 @@ namespace Modem
             // Make sure GPRS is still connected
             if (!modem.isGprsConnected())
             {
-                SerialMon.print(F("Connecting to "));
-                SerialMon.print(apn);
+                SerialMon.println("Connecting to " + String(apn));
                 if (!modem.gprsConnect(apn))
                 {
                     SerialMon.println("Reconnection failed...");
                     delay(10000);
-                    return;
+                    return false;
                 }
             }
         }
+
+        return true;
     }
 }
