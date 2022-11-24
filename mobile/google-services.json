@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "579251533600",
+    "project_id": "sentinel-bike-lock",
+    "storage_bucket": "sentinel-bike-lock.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:579251533600:android:16392423a8030d918f4945",
+        "android_client_info": {
+          "package_name": "com.sentinel.bikealarm"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "579251533600-ol7v740r28s50iij4u3ibt7ke46opp8r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_iv7IyiiBzjHULLg5pEP--Z96aTjpeoc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "579251533600-ol7v740r28s50iij4u3ibt7ke46opp8r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

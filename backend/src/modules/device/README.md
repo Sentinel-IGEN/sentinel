@@ -1,0 +1,1 @@
+endpoints called by embedded devices, or services related to embedded devices
