@@ -1,6 +1,6 @@
 import { Controller, Body, Post, HttpException } from '@nestjs/common';
 import { Error } from 'mongoose';
-import { MongoService } from '../../services';
+import { MongoService, MqttService } from '../../services';
 import { CreateDeviceDTO } from 'src/schemas/dtos';
 import { EmbeddedDevice } from 'src/schemas/EmbeddedDevice.schema';
 
@@ -8,6 +8,7 @@ import { EmbeddedDevice } from 'src/schemas/EmbeddedDevice.schema';
 export class DeviceController {
   constructor(
     private readonly MongoService: MongoService,
+    private readonly MqttService: MqttService,
   ) {}
 
   // Create embedded device using device UUID

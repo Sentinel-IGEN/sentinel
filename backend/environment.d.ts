@@ -7,6 +7,9 @@ declare global {
       AWS_SNS_ANDROID_PUSH_ARN: string;
       AWS_SNS_IOS_PUSH_ARN: string;
       DB_URL: string;
+      MQTT_USERNAME: string;
+      MQTT_PASSWORD: string;
+      MQTT_CLUSTER_URL: string;
     }
   }
 }
