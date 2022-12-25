@@ -6,11 +6,11 @@ namespace Modem
     {
         // Set SIM7000G GPIO4 LOW ,turn on GPS power
         // CMD:AT+SGPIO=0,4,1,1
-        // Only in version 20200415 is there a function to control GPS power
         modem.sendAT("+SGPIO=0,4,1,1");
         if (modem.waitResponse(10000L) != 1)
         {
             DBG(" SGPIO=0,4,1,1 false ");
+            Serial.println("Failed to enable GPS");
         }
         modem.enableGPS();
     }
@@ -19,11 +19,11 @@ namespace Modem
     {
         // Set SIM7000G GPIO4 LOW ,turn off GPS power
         // CMD:AT+SGPIO=0,4,1,0
-        // Only in version 20200415 is there a function to control GPS power
         modem.sendAT("+SGPIO=0,4,1,0");
         if (modem.waitResponse(10000L) != 1)
         {
             DBG(" SGPIO=0,4,1,0 false ");
+            Serial.println("Failed to enable GPS");
         }
         modem.disableGPS();
     }
@@ -118,62 +118,54 @@ namespace Modem
      * Initializes modem and attempts to establish cellular connection automatically.
      * Will block until success and prints out modem information on success.
      */
-    void initialize(TinyGsm modem)
+    void initialize(TinyGsm modem, bool restart, bool showInfo)
     {
-        SerialMon.println("=== Initializing modem ===");
-        modemPowerOn();
-
-        if (!modem.init())
+        bool success = false;
+        while (!success)
         {
-            Modem::modemRestart();
-            delay(2000);
-            Serial.println("Failed to restart modem, attempting to continue without restarting");
+            modemPowerOn();
+            delay(5000);
+
+            if (!modem.init() || restart)
+            {
+                SerialMon.println("Restarting modem...");
+                Modem::modemRestart();
+                delay(1000);
+            }
+
+            // 1 CAT-M
+            // 2 NB-IoT
+            // 3 CAT-M and NB-IoT
+            modem.setPreferredMode(1);
+
+            // Network connection options
+            // 2, Automatic
+            // 13, GSM only
+            // 38, LTE only
+            // 51, GSM and LTE only
+            modem.setNetworkMode(2);
+            delay(5000);
+
+            while (!modem.isNetworkConnected())
+            {
+                SerialMon.println("Attempting to connect to network...");
+                SerialMon.println("Signal Quality: " + String(modem.getSignalQuality()));
+                delay(1000);
+            }
+            SerialMon.print("Connecting to " + String(apn));
+            
+            if (modem.gprsConnect(apn))
+                success = true;
+            else
+                SerialMon.println("Failed to connect via GPRS");
         }
 
-        modem.setNetworkMode(2); // Set to automatic connection
-        while (!modem.gprsConnect(apn))
-        {
-            SerialMon.println("Failed to connect via GPRS, retrying...");
-            Serial.print("Signal Quality: " + String(modem.getSignalQuality()));
-        }
         SerialMon.println("Connection success!");
 
-        SerialMon.print("Modem Info: " + modem.getModemInfo());
-        requestUEInfo(modem);
-    }
-
-    /*
-     * Checks connection status, attempts to reconnect on failure.
-     */
-    void checkConnection(TinyGsm modem)
-    {
-        // Make sure we're still registered on the network
-        if (!modem.isNetworkConnected())
+        if (showInfo)
         {
-            SerialMon.println("Network disconnected");
-            if (!modem.waitForNetwork(180000L))
-            {
-                SerialMon.println("Network failure...");
-                delay(10000);
-                return;
-            }
-            if (modem.isNetworkConnected())
-            {
-                SerialMon.println("Network re-connected");
-            }
-
-            // Make sure GPRS is still connected
-            if (!modem.isGprsConnected())
-            {
-                SerialMon.print(F("Connecting to "));
-                SerialMon.print(apn);
-                if (!modem.gprsConnect(apn))
-                {
-                    SerialMon.println("Reconnection failed...");
-                    delay(10000);
-                    return;
-                }
-            }
+            SerialMon.println("Modem Info: " + modem.getModemInfo());
+            requestUEInfo(modem);
         }
     }
 }
