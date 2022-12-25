@@ -33,8 +33,7 @@ namespace Modem
     void modemRestart();
     void collectDiagnosisData(TinyGsm modem);
     void requestUEInfo(TinyGsm modem);
-    void initialize(TinyGsm modem);
-    bool checkConnection(TinyGsm modem);
+    void initialize(TinyGsm modem, bool restart = false, bool showInfo = true);
 }
 
 #endif

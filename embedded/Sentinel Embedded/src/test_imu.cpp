@@ -3,6 +3,13 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 
+/*
+* Motion detection threshold - Units of 2mg
+* https://www.i2cdevlib.com/docs/html/class_m_p_u6050.html#ab7a825b1b8b86cebda308289630795e7
+*/ 
+#define MOTION_DETECTION_THRESHOLD 5
+#define MOTION_EVENT_DURATION 40
+
 Adafruit_MPU6050 mpu;
 bool motionDetected = false;
 
@@ -25,9 +32,9 @@ void setup(void)
 
   // Setup motion detection
   mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
-  mpu.setMotionDetectionThreshold(1);
-  mpu.setMotionDetectionDuration(20);
-  mpu.setInterruptPinLatch(true); // Keep it latched.  Will turn off when reinitialized.
+  mpu.setMotionDetectionThreshold(MOTION_DETECTION_THRESHOLD);
+  mpu.setMotionDetectionDuration(MOTION_EVENT_DURATION);
+  mpu.setInterruptPinLatch(false); // Keep it latched.  Will turn off when reinitialized.
   mpu.setInterruptPinPolarity(true);
   mpu.setMotionInterrupt(true);
 

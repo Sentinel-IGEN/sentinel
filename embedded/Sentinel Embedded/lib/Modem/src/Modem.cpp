@@ -118,64 +118,50 @@ namespace Modem
      * Initializes modem and attempts to establish cellular connection automatically.
      * Will block until success and prints out modem information on success.
      */
-    void initialize(TinyGsm modem)
+    void initialize(TinyGsm modem, bool restart, bool showInfo)
     {
-        SerialMon.println("=== Initializing modem ===");
-        modemPowerOn();
-
-        if (!modem.init())
+        bool success = false;
+        while (!success)
         {
-            Modem::modemRestart();
-            delay(2000);
-            Serial.println("Failed to restart modem, attempting to continue without restarting");
+            modemPowerOn();
+            delay(5000);
+
+            if (!modem.init() || restart)
+            {
+                SerialMon.println("Restarting modem...");
+                Modem::modemRestart();
+                delay(1000);
+            }
+
+            modem.setPreferredMode(1);
+            // Network connection options
+            // 2, Automatic
+            // 13, GSM only
+            // 38, LTE only
+            // 51, GSM and LTE only
+            modem.setNetworkMode(2);
+            delay(5000);
+
+            while (!modem.isNetworkConnected())
+            {
+                SerialMon.println("Attempting to connect to network...");
+                SerialMon.println("Signal Quality: " + String(modem.getSignalQuality()));
+                delay(1000);
+            }
+            SerialMon.print("Connecting to " + String(apn));
+            
+            if (modem.gprsConnect(apn))
+                success = true;
+            else
+                SerialMon.println("Failed to connect via GPRS");
         }
 
-        modem.setNetworkMode(2); // Set to automatic connection
-        while (!modem.gprsConnect(apn))
-        {
-            SerialMon.println("Failed to connect via GPRS, retrying...");
-            Serial.println("Signal Quality: " + String(modem.getSignalQuality()));
-        }
         SerialMon.println("Connection success!");
 
-        SerialMon.println("Modem Info: " + modem.getModemInfo());
-        requestUEInfo(modem);
-    }
-
-    /*
-     * Checks connection status, attempts to reconnect on failure.
-     */
-    bool checkConnection(TinyGsm modem)
-    {
-        // Make sure we're still registered on the network
-        if (!modem.isNetworkConnected())
+        if (showInfo)
         {
-            SerialMon.println("Network disconnected");
-            if (!modem.waitForNetwork(180000L))
-            {
-                SerialMon.println("Network failure...");
-                delay(10000);
-                return false;
-            }
-
-            if (modem.isNetworkConnected())
-            {
-                SerialMon.println("Network re-connected");
-            }
-
-            // Make sure GPRS is still connected
-            if (!modem.isGprsConnected())
-            {
-                SerialMon.println("Connecting to " + String(apn));
-                if (!modem.gprsConnect(apn))
-                {
-                    SerialMon.println("Reconnection failed...");
-                    delay(10000);
-                    return false;
-                }
-            }
+            SerialMon.println("Modem Info: " + modem.getModemInfo());
+            requestUEInfo(modem);
         }
-
-        return true;
     }
 }
