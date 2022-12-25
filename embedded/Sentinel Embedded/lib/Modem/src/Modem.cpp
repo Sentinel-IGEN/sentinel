@@ -6,11 +6,11 @@ namespace Modem
     {
         // Set SIM7000G GPIO4 LOW ,turn on GPS power
         // CMD:AT+SGPIO=0,4,1,1
-        // Only in version 20200415 is there a function to control GPS power
         modem.sendAT("+SGPIO=0,4,1,1");
         if (modem.waitResponse(10000L) != 1)
         {
             DBG(" SGPIO=0,4,1,1 false ");
+            Serial.println("Failed to enable GPS");
         }
         modem.enableGPS();
     }
@@ -19,11 +19,11 @@ namespace Modem
     {
         // Set SIM7000G GPIO4 LOW ,turn off GPS power
         // CMD:AT+SGPIO=0,4,1,0
-        // Only in version 20200415 is there a function to control GPS power
         modem.sendAT("+SGPIO=0,4,1,0");
         if (modem.waitResponse(10000L) != 1)
         {
             DBG(" SGPIO=0,4,1,0 false ");
+            Serial.println("Failed to enable GPS");
         }
         modem.disableGPS();
     }
@@ -133,7 +133,11 @@ namespace Modem
                 delay(1000);
             }
 
+            // 1 CAT-M
+            // 2 NB-IoT
+            // 3 CAT-M and NB-IoT
             modem.setPreferredMode(1);
+
             // Network connection options
             // 2, Automatic
             // 13, GSM only

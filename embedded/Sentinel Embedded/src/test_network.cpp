@@ -23,7 +23,7 @@ void setup()
 
   delay(10000);
 
-  Serial.println("========INIT========");
+  SerialMon.println("========INIT========");
   Modem::collectDiagnosisData(modem);
 }
 
@@ -37,7 +37,7 @@ void loop()
         38, /*LTE only*/
         51  /*GSM and LTE only*/
     };
-    Serial.printf("Try %d method\n", network[i]);
+    SerialMon.printf("Try %d method\n", network[i]);
     modem.setNetworkMode(network[i]);
     delay(3000);
     bool isConnected = false;
@@ -45,22 +45,22 @@ void loop()
     while (tryCount--)
     {
       int16_t signal = modem.getSignalQuality();
-      Serial.print("Signal Quality: ");
-      Serial.print(signal);
-      Serial.print(" ");
-      Serial.print("isNetworkConnected: ");
+      SerialMon.print("Signal Quality: ");
+      SerialMon.print(signal);
+      SerialMon.print(" ");
+      SerialMon.print("isNetworkConnected: ");
       isConnected = modem.isNetworkConnected();
-      Serial.println(isConnected ? "CONNECTED" : "NOT CONNECTED");
+      SerialMon.println(isConnected ? "CONNECTED" : "NOT CONNECTED");
 
       if (isConnected)
       {
         if (modem.gprsConnect(apn))
         {
-          Serial.println("GPRS connect successful");
+          SerialMon.println("GPRS connect successful");
         }
         else
         {
-          Serial.println("GPRS connect NOT successful");
+          SerialMon.println("GPRS connect NOT successful");
         }
         break;
       }
@@ -74,9 +74,11 @@ void loop()
   }
   digitalWrite(LED_PIN, HIGH);
 
-  Serial.println();
-  Serial.println("Device is connected!");
-  Serial.println();
+  SerialMon.println();
+  SerialMon.println("Device is connected!");
+  SerialMon.println("Modem Info: " + modem.getModemInfo());
+  Modem::requestUEInfo(modem);
+  SerialMon.println();
 
   while (1)
   {
