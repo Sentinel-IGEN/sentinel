@@ -31,6 +31,7 @@
     "@nestjs/platform-express": "^9.0.0",
     "bcrypt": "^5.1.0",
     "mongoose": "^6.6.5",
+    "mqtt": "^4.3.7",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0"
