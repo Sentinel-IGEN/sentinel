@@ -1,8 +1,12 @@
 import { Controller, Param, Body, Post, HttpException } from '@nestjs/common';
 import { SNSService, MongoService } from '../../services';
 import { User } from '../../schemas/User.schema';
-import { RegisterMobileDeviceTokenDTO } from '../../schemas/dtos';
-import { NotFoundException } from '@aws-sdk/client-sns';
+import {
+  RegisterMobileDeviceTokenDTO,
+  RegisterPhoneNumberDTO,
+  VerifyPhoneNumberDTO,
+} from '../../schemas/dtos';
+import { NotFoundException, ValidationException } from '@aws-sdk/client-sns';
 @Controller('/mobile')
 export class MobileController {
   constructor(
@@ -105,5 +109,25 @@ export class MobileController {
     } else {
       throw new HttpException('JSON body is missing required fields', 400);
     }
+  }
+
+  @Post('/registerPhoneNumber')
+  async registerPhoneNumber(@Body() data: RegisterPhoneNumberDTO) {
+    const res = await this.SNSService.createPhoneNumber(data.phoneNumber);
+    return res;
+  }
+
+  @Post('/verifyPhoneNumber')
+  async verifyPhoneNumber(@Body() data: VerifyPhoneNumberDTO) {
+    await this.SNSService.verifyPhoneNumber({
+      PhoneNumber: data.phoneNumber,
+      OneTimePassword: data.oneTimePassword,
+    });
+
+    const user = await this.MongoService.updateUser(data.userId, {
+      phoneNumber: data.phoneNumber,
+    });
+
+    return user;
   }
 }

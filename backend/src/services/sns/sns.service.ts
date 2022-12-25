@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { VerifyPhoneNumberDTO } from '../../schemas/dtos';
 import {
   SNSClient,
   CreateTopicCommand,
   CreatePlatformEndpointCommand,
   GetEndpointAttributesCommand,
   SetEndpointAttributesCommand,
+  CreateSMSSandboxPhoneNumberCommand,
+  VerifySMSSandboxPhoneNumberCommand,
+  VerifySMSSandboxPhoneNumberCommandInput,
 } from '@aws-sdk/client-sns';
 
 @Injectable()
@@ -81,5 +85,23 @@ export class SNSService {
     } else if (os === 'Android') {
       return process.env.AWS_SNS_ANDROID_PUSH_ARN;
     }
+  }
+
+  // create phone number in SMS Sandbox
+  async createPhoneNumber(phoneNumber: string) {
+    const command = new CreateSMSSandboxPhoneNumberCommand({
+      PhoneNumber: phoneNumber,
+    });
+
+    const response = await this.sns.send(command);
+    return response;
+  }
+
+  // verify phone number in SMS Sandbox
+  async verifyPhoneNumber(data: VerifySMSSandboxPhoneNumberCommandInput) {
+    const command = new VerifySMSSandboxPhoneNumberCommand(data);
+
+    const response = await this.sns.send(command);
+    return response;
   }
 }

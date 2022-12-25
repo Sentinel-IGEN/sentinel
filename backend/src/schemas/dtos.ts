@@ -15,5 +15,15 @@ export interface UpdateDeviceDTO {
 export interface RegisterMobileDeviceTokenDTO {
   userId: Types.ObjectId;
   deviceToken: string;
-  type: "iOS" | "Android"
+  type: 'iOS' | 'Android';
+}
+
+export interface RegisterPhoneNumberDTO {
+  phoneNumber: string;
+}
+
+export interface VerifyPhoneNumberDTO {
+  userId: Types.ObjectId;
+  phoneNumber: string;
+  oneTimePassword: string;
 }
