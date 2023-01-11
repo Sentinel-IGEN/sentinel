@@ -1,12 +1,13 @@
-import { Controller, Param, Body, Post, HttpException } from '@nestjs/common';
+import { Controller, Body, Post, HttpException } from '@nestjs/common';
 import { SNSService, MongoService } from '../../services';
 import { User } from '../../schemas/User.schema';
 import {
   RegisterMobileDeviceTokenDTO,
   RegisterPhoneNumberDTO,
   VerifyPhoneNumberDTO,
+  SendSMSDTO,
 } from '../../schemas/dtos';
-import { NotFoundException, ValidationException } from '@aws-sdk/client-sns';
+import { NotFoundException } from '@aws-sdk/client-sns';
 @Controller('/mobile')
 export class MobileController {
   constructor(
@@ -129,5 +130,12 @@ export class MobileController {
     });
 
     return user;
+  }
+
+  /* ENDPOINT FOR TESTING */
+  @Post('/sendSMS')
+  async sendSMS(@Body() data: SendSMSDTO) {
+    await this.SNSService.sendSMS(data.message, data.phoneNumber);
+    return 'Success';
   }
 }

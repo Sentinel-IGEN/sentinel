@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { VerifyPhoneNumberDTO } from '../../schemas/dtos';
 import {
   SNSClient,
   CreateTopicCommand,
@@ -9,6 +8,7 @@ import {
   CreateSMSSandboxPhoneNumberCommand,
   VerifySMSSandboxPhoneNumberCommand,
   VerifySMSSandboxPhoneNumberCommandInput,
+  PublishCommand,
 } from '@aws-sdk/client-sns';
 
 @Injectable()
@@ -100,6 +100,16 @@ export class SNSService {
   // verify phone number in SMS Sandbox
   async verifyPhoneNumber(data: VerifySMSSandboxPhoneNumberCommandInput) {
     const command = new VerifySMSSandboxPhoneNumberCommand(data);
+
+    const response = await this.sns.send(command);
+    return response;
+  }
+
+  async sendSMS(message: string, phoneNumber: string) {
+    const command = new PublishCommand({
+      PhoneNumber: phoneNumber,
+      Message: message
+    });
 
     const response = await this.sns.send(command);
     return response;

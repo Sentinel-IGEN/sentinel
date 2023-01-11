@@ -27,3 +27,8 @@ export interface VerifyPhoneNumberDTO {
   phoneNumber: string;
   oneTimePassword: string;
 }
+
+export interface SendSMSDTO {
+  phoneNumber: string;
+  message: string;
+}
