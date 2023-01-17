@@ -133,6 +133,7 @@ export class MobileController {
   }
 
   /* ENDPOINT FOR TESTING */
+  /* NOT FOR USE */
   @Post('/sendSMS')
   async sendSMS(@Body() data: SendSMSDTO) {
     await this.SNSService.sendSMS(data.message, data.phoneNumber);
