@@ -1,22 +1,30 @@
-import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
-import PushNotifications from "./components/PushNotifications";
+import { SafeAreaView } from "react-native";
+import { ThemeProvider, createTheme } from "@rneui/themed";
+import ConnectDeviceView from "./components/views/ConnectDeviceView";
+
+const theme = createTheme({
+  mode: "light",
+  lightColors: {
+    primary: "#6562FF",
+  },
+  components: {
+    Text: {
+      h1Style: {
+        fontFamily: "Roboto",
+        fontWeight: "bold",
+        fontSize: 36,
+        color: "#171587",
+      },
+    },
+  },
+});
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-      <PushNotifications />
-    </View>
+    <ThemeProvider theme={theme}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <ConnectDeviceView />
+      </SafeAreaView>
+    </ThemeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
