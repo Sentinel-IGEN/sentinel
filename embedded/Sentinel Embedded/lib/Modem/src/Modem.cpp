@@ -150,9 +150,10 @@ namespace Modem
             {
                 SerialMon.println("Attempting to connect to network...");
                 SerialMon.println("Signal Quality: " + String(modem.getSignalQuality()));
+                digitalWrite(LED_PIN, !digitalRead(LED_PIN));
                 delay(1000);
             }
-            SerialMon.print("Connecting to " + String(apn));
+            SerialMon.println("Connecting to " + String(apn));
             
             if (modem.gprsConnect(apn))
                 success = true;

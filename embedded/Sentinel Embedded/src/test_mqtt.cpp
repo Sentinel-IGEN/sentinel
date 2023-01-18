@@ -111,6 +111,9 @@ void loop()
   {
     Modem::initialize(modem, true, false);
   }
+  else {
+    digitalWrite(LED_PIN, HIGH);
+  }
 
   if (!mqtt.connected())
   {

@@ -1,5 +1,5 @@
-#ifndef __MODEM_HELPER_INCLUDED__
-#define __MODEM_HELPER_INCLUDED__
+#ifndef __MODEM_H__
+#define __MODEM_H__
 
 // Set serial for debug console (to the Serial Monitor, default speed 115200)
 #define SerialMon Serial
@@ -23,6 +23,7 @@ const char apn[] = "internet.freedommobile.ca";
 #define uS_TO_S_FACTOR 1000000ULL // Conversion factor for micro seconds to seconds
 #define TIME_TO_SLEEP 60          // Time ESP32 will go to sleep (in seconds)
 #define PWR_PIN 4
+#define LED_PIN 12
 
 namespace Modem
 {
