@@ -7,134 +7,126 @@
  * Documentation
  * https://pubsubclient.knolleary.net/api
  *
- **************************************************************
- * This test connects to HiveMQ's showcase broker.
- *
- * We can test sending and receiving messages from the HiveMQ webclient
- * available at http://www.hivemq.com/demos/websocket-client/.
- *
- * Subscribe to the topic GsmClientTest/ledStatus
- * Publish "toggle" to the topic GsmClientTest/led and the LED on your board
- * should toggle and you should see a new message published to
- * GsmClientTest/ledStatus with the newest LED status.
- *
  **************************************************************/
 #include <Arduino.h>
 #include <Modem.h>
-
-// See all AT commands, if wanted
-// #define DUMP_AT_COMMANDS
-
-// Range to attempt to autobaud
-// NOTE:  DO NOT AUTOBAUD in production code.  Once you've established
-// communication, set a fixed baud rate using modem.setBaud(#).
-#define GSM_AUTOBAUD_MIN 9600
-#define GSM_AUTOBAUD_MAX 115200
-
-// Add a reception delay, if needed.
-// This may be needed for a fast processor at a slow baud rate.
-// #define TINY_GSM_YIELD() { delay(2); }
-
-// MQTT details
-const char *broker = "broker.hivemq.com";
-const char *topicLED = "GsmClientTest/led";
-const char *topicInit = "GsmClientTest/init";
-const char *topicLEDStatus = "GsmClientTest/ledStatus";
-
 #include <TinyGsmClient.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
+#include <secrets.h>
 
-#ifdef DUMP_AT_COMMANDS
-#include <StreamDebugger.h>
-StreamDebugger debugger(SerialAT, SerialMon);
-TinyGsm modem(debugger);
-#else
+// Range to attempt to autobaud
+#define GSM_AUTOBAUD_MIN 9600
+#define GSM_AUTOBAUD_MAX 115200
+#define S_TO_US 1000000
+#define LED_PIN 12
+
+// MQTT details
+const char *broker = "fb14f44e5bae4ffbb829c97b6cdc10eb.s2.eu.hivemq.cloud";
+// Subscribed Topics
+const char *topicLockRequest = "lock/device1";
+// Publish Topics
+const char *topicLockStatus = "lock_status/device1";
+const char *topicDeviceHealth = "device_health/device1";
+
 TinyGsm modem(SerialAT);
-#endif
-
-TinyGsmClient client(modem);
+TinyGsmClientSecure client(modem);
 PubSubClient mqtt(client);
 
-#define LED_PIN 13
-int ledStatus = LOW;
-uint32_t lastReconnectAttempt = 0;
-float lat, lon = 0;
+bool lockStatus = false;
+uint32_t lastMQTTPing = 0;
+int numReconnect = 0;
+bool modemConnected = false;
+char mqttClientID[10];
+DynamicJsonDocument doc(1024);
 
-void mqttCallback(char *topic, byte *payload, unsigned int len)
+// Generate a unique 9 character MQTT client ID
+static void generateUniqueID()
 {
-  SerialMon.print("Message arrived [");
-  SerialMon.print(topic);
-  SerialMon.print("]: ");
-  SerialMon.write(payload, len);
-  SerialMon.println();
+  for (int i = 0; i < 9; ++i)
+    mqttClientID[i] = 'a' + rand() % 26;
+}
 
-  // Only proceed if incoming message's topic matches
-  if (String(topic) == topicLED)
+static void mqttCallback(char *topic, byte *payload, unsigned int len)
+{
+  String data = String((char *)payload, len);
+  SerialMon.println("Message arrived [" + String(topic) + "]: " + data);
+  deserializeJson(doc, data);
+  
+  if (String(topic) == topicLockRequest)
   {
-    ledStatus = !ledStatus;
-    digitalWrite(LED_PIN, ledStatus);
-    mqtt.publish(topicLEDStatus, ledStatus ? "1" : "0");
+    if (doc["command"] == 1)
+      lockStatus = true;
+    else if (doc["command"] == 0)
+      lockStatus = false;
+    else
+      SerialMon.println("Unrecognized lock command: " + data);
+    mqtt.publish(topicLockStatus, lockStatus ? "Lock on": "Lock off");
   }
 }
 
-boolean mqttConnect()
+static bool mqttConnect()
 {
-  SerialMon.print("Connecting to ");
-  SerialMon.print(broker);
+  generateUniqueID();
+  numReconnect++;
+  mqtt.disconnect();
 
-  // Connect to MQTT Broker
-  boolean status = mqtt.connect("GsmClientTest");
-  if (status == false)
+  if (numReconnect > 1)
+    Modem::initialize(modem, true);
+
+  delay(1000);
+
+  SerialMon.println("Connecting to " + String(MQTT_BROKER) + " with client ID: " + mqttClientID);
+  bool mqttConnected = mqtt.connect(mqttClientID, MQTT_USER, MQTT_PASSWORD, "device_health/device1", 2, false, "Disconnected", true);
+
+  if (mqttConnected == false)
   {
     SerialMon.println("MQTT connection failed.");
     return false;
   }
-  SerialMon.println("MQTT connection success!");
 
-  mqtt.publish(topicInit, "MQTT test started!");
-  mqtt.subscribe(topicLED);
+  SerialMon.println("MQTT connection success!");
+  mqtt.subscribe(topicLockRequest, 1);
   return mqtt.connected();
 }
 
 void setup()
 {
-  // Set console baud rate
   SerialMon.begin(115200);
   pinMode(LED_PIN, OUTPUT);
   SerialAT.begin(UART_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
 
   Modem::initialize(modem);
 
-  // GPRS connection parameters are usually set after network registration
-  SerialMon.print("Connecting to " + String(apn));
-
-  // MQTT Broker setup
-  mqtt.setServer(broker, 1883);
+  mqtt.setServer(broker, 8883);
   mqtt.setCallback(mqttCallback);
-
-  Modem::enableGPS(modem);
+  mqtt.setKeepAlive(60);
 }
 
 void loop()
 {
-  Modem::checkConnection(modem);
+  modemConnected = modem.isNetworkConnected();
+
+  if (!modemConnected)
+  {
+    Modem::initialize(modem, true, false);
+  }
 
   if (!mqtt.connected())
   {
-    // Reconnect every 10 seconds
-    uint32_t t = millis();
-    if (t - lastReconnectAttempt > 10000L)
-    {
-      SerialMon.println("MQTT not connected, connecting now...");
-      lastReconnectAttempt = t;
-      if (mqttConnect())
-      {
-        lastReconnectAttempt = 0;
-      }
-    }
-    delay(100);
-    return;
+    SerialMon.println("MQTT not connected, reconnecting now...");
+    mqttConnect();
+    SerialMon.println("State: " + String(mqtt.state()));
+  }
+
+  if (millis() - lastMQTTPing > 10000)
+  {
+    mqtt.publish(topicDeviceHealth, "Connected");
+    lastMQTTPing = millis();
   }
 
   mqtt.loop();
+
+  esp_sleep_enable_timer_wakeup(1 * S_TO_US);
+  esp_light_sleep_start();
 }
