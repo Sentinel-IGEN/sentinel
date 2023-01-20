@@ -1,11 +1,15 @@
-import { Controller, Body, Post, HttpException } from '@nestjs/common';
-import { SNSService, MongoService } from '../../services';
+import { Controller, Body, Post, HttpException, Logger, HttpCode } from '@nestjs/common';
+import { SNSService, MongoService, MqttService } from '../../services';
 import { User } from '../../schemas/User.schema';
 import {
   RegisterMobileDeviceTokenDTO,
   RegisterPhoneNumberDTO,
   VerifyPhoneNumberDTO,
   SendSMSDTO,
+  SendMQTTMessageDTO,
+  LockDeviceDTO,
+  MotionThresholdDTO,
+  alarmDTO,
 } from '../../schemas/dtos';
 import { NotFoundException } from '@aws-sdk/client-sns';
 @Controller('/mobile')
@@ -13,7 +17,8 @@ export class MobileController {
   constructor(
     private readonly SNSService: SNSService,
     private readonly MongoService: MongoService,
-  ) {}
+    private readonly MqttService: MqttService,
+  ) { }
 
   // Create mobile user
   @Post('')
@@ -130,6 +135,44 @@ export class MobileController {
     });
 
     return user;
+  }
+
+  @Post('/toggleLock')
+  @HttpCode(201)
+  toggleLock(@Body() data: LockDeviceDTO) {
+    const message = {
+      command: Number(data.status) // 0: unlock, 1: lock
+    }
+    const result = this.MqttService.publishMessage("lock", data.device, JSON.stringify(message));
+    return result ? 'success' : 'failure';
+  }
+
+  @Post('/setMotionThreshold')
+  @HttpCode(201)
+  setMotionThreshold(@Body() data: MotionThresholdDTO) {
+    const message = {
+      command: Number(data.threshold) // 1 - 10
+    }
+    const result = this.MqttService.publishMessage("motion_threshold", data.device, JSON.stringify(message));
+    return result ? 'success' : 'failure';
+  }
+
+  @Post('/toggleAlarm')
+  @HttpCode(201)
+  toggleAlarm(@Body() data: alarmDTO) {
+    const message = {
+      command: Number(data.status) // 0:off, 1:on
+    }
+    const result = this.MqttService.publishMessage("alarm", data.device, JSON.stringify(message));
+    return result ? 'success' : 'failure';
+  }
+
+  /* FOR TESTING */
+  @Post('/sendMQTTMessage')
+  @HttpCode(201)
+  sendMQTTMessage(@Body() data: SendMQTTMessageDTO) {
+    const result = this.MqttService.publishMessage(data.topic, data.device, data.message);
+    return result ? 'success' : 'failure';
   }
 
   /* ENDPOINT FOR TESTING */

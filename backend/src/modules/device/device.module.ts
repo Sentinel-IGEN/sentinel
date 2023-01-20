@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { DeviceController } from './device.controller';
-import { MongoModule } from '../../services'
+import { MongoModule, MqttModule } from '../../services'
 
 @Module({
-  imports: [MongoModule],
+  imports: [MongoModule, MqttModule],
   controllers: [DeviceController],
 })
 export class DeviceModule {}

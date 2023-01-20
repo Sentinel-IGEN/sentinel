@@ -28,6 +28,27 @@ export interface VerifyPhoneNumberDTO {
   oneTimePassword: string;
 }
 
+export interface LockDeviceDTO {
+  status: Number; // 0: unlock, 1: lock
+  device: string;
+}
+
+export interface MotionThresholdDTO {
+  threshold: Number; // 1 - 10
+  device: string;
+}
+
+export interface alarmDTO {
+  status: Number; // 0:off, 1:on
+  device: string;
+}
+
+export interface SendMQTTMessageDTO {
+  topic: string;
+  device: string;
+  message: string;
+}
+
 export interface SendSMSDTO {
   phoneNumber: string;
   message: string;
