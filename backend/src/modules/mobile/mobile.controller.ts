@@ -1,11 +1,15 @@
-import { Controller, Body, Post, HttpException } from '@nestjs/common';
-import { SNSService, MongoService } from '../../services';
+import { Controller, Body, Post, HttpException, Logger, HttpCode } from '@nestjs/common';
+import { SNSService, MongoService, MqttService } from '../../services';
 import { User } from '../../schemas/User.schema';
 import {
   RegisterMobileDeviceTokenDTO,
   RegisterPhoneNumberDTO,
   VerifyPhoneNumberDTO,
   SendSMSDTO,
+  SendMQTTMessageDTO,
+  LockDeviceDTO,
+  MotionThresholdDTO,
+  alarmDTO,
 } from '../../schemas/dtos';
 import { NotFoundException } from '@aws-sdk/client-sns';
 @Controller('/mobile')
@@ -13,7 +17,8 @@ export class MobileController {
   constructor(
     private readonly SNSService: SNSService,
     private readonly MongoService: MongoService,
-  ) {}
+    private readonly MqttService: MqttService,
+  ) { }
 
   // Create mobile user
   @Post('')
@@ -130,6 +135,44 @@ export class MobileController {
     });
 
     return user;
+  }
+
+  @Post('/lock')
+  @HttpCode(201)
+  lock(@Body() data: LockDeviceDTO) {
+    const message = {
+      command: Number(data.status)
+    }
+    const result = this.MqttService.publishMessage("lock", data.device, JSON.stringify(message));
+    return result ? 'success' : 'failure';
+  }
+
+  @Post('/motionThreshold')
+  @HttpCode(201)
+  motionThreshold(@Body() data: MotionThresholdDTO) {
+    const message = {
+      command: Number(data.threshold)
+    }
+    const result = this.MqttService.publishMessage("motion_threshold", data.device, JSON.stringify(message));
+    return result ? 'success' : 'failure';
+  }
+
+  @Post('/alarm')
+  @HttpCode(201)
+  alarm(@Body() data: alarmDTO) {
+    const message = {
+      command: Number(data.status)
+    }
+    const result = this.MqttService.publishMessage("alarm", data.device, JSON.stringify(message));
+    return result ? 'success' : 'failure';
+  }
+
+  /* FOR TESTING */
+  @Post('/sendMQTTMessage')
+  @HttpCode(201)
+  sendMQTTMessage(@Body() data: SendMQTTMessageDTO) {
+    const result = this.MqttService.publishMessage(data.topic, data.device, data.message);
+    return result ? 'success' : 'failure';
   }
 
   /* ENDPOINT FOR TESTING */
