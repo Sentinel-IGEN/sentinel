@@ -137,31 +137,31 @@ export class MobileController {
     return user;
   }
 
-  @Post('/lock')
+  @Post('/toggleLock')
   @HttpCode(201)
-  lock(@Body() data: LockDeviceDTO) {
+  toggleLock(@Body() data: LockDeviceDTO) {
     const message = {
-      command: Number(data.status)
+      command: Number(data.status) // 0: unlock, 1: lock
     }
     const result = this.MqttService.publishMessage("lock", data.device, JSON.stringify(message));
     return result ? 'success' : 'failure';
   }
 
-  @Post('/motionThreshold')
+  @Post('/setMotionThreshold')
   @HttpCode(201)
-  motionThreshold(@Body() data: MotionThresholdDTO) {
+  setMotionThreshold(@Body() data: MotionThresholdDTO) {
     const message = {
-      command: Number(data.threshold)
+      command: Number(data.threshold) // 1 - 10
     }
     const result = this.MqttService.publishMessage("motion_threshold", data.device, JSON.stringify(message));
     return result ? 'success' : 'failure';
   }
 
-  @Post('/alarm')
+  @Post('/toggleAlarm')
   @HttpCode(201)
-  alarm(@Body() data: alarmDTO) {
+  toggleAlarm(@Body() data: alarmDTO) {
     const message = {
-      command: Number(data.status)
+      command: Number(data.status) // 0:off, 1:on
     }
     const result = this.MqttService.publishMessage("alarm", data.device, JSON.stringify(message));
     return result ? 'success' : 'failure';

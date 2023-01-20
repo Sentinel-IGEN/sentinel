@@ -29,17 +29,17 @@ export interface VerifyPhoneNumberDTO {
 }
 
 export interface LockDeviceDTO {
-  status: Number;
+  status: Number; // 0: unlock, 1: lock
   device: string;
 }
 
 export interface MotionThresholdDTO {
-  threshold: Number;
+  threshold: Number; // 1 - 10
   device: string;
 }
 
 export interface alarmDTO {
-  status: Number;
+  status: Number; // 0:off, 1:on
   device: string;
 }
 
