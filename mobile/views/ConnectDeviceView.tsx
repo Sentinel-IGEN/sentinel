@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { CodeField, Cursor } from "react-native-confirmation-code-field";
+import { API_URL } from "@env";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const ConnectDeviceView = () => {
   const [value, setValue] = useState("");
+  const [isFetching, setIsFetching] = useState(false);
 
   const renderCell = ({ index, symbol, isFocused }) => (
     <View key={index} style={[styles.cellRoot, isFocused && styles.focusCell]}>
@@ -14,6 +18,35 @@ const ConnectDeviceView = () => {
     </View>
   );
 
+  const handleSubmit = async () => {
+    try {
+      setIsFetching(true)
+
+      const res = await fetch(`${API_URL}`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ embeddedDeviceId: value.toLowerCase() }),
+      });
+
+      const content = await res.json();
+      
+      // save data in local storage
+      try {
+        await AsyncStorage.multiSet([['@userId', content._id], ['@embeddedDeviceId', content.embeddedDeviceId]])
+      } catch (e) {
+        console.log("error saving user connection info")
+      }
+
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsFetching(false)
+    }
+  };
+
   return (
     <View
       style={{
@@ -22,7 +55,8 @@ const ConnectDeviceView = () => {
         padding: 20,
         justifyContent: "center",
         alignItems: "center",
-      }}>
+      }}
+    >
       <Text h1>Connect your bike</Text>
       <CodeField
         value={value}
@@ -32,7 +66,13 @@ const ConnectDeviceView = () => {
         renderCell={renderCell}
         rootStyle={styles.codeFiledRoot}
       />
-      <Button>CONNECT</Button>
+      <Text style={styles.infoText}>
+        Please enter the Sentinel authentication code in your included
+        registration card.
+      </Text>
+      <Button containerStyle={styles.connectButton} onPress={handleSubmit} disabled={value.length < 6 || isFetching}>
+        CONNECT
+      </Button>
     </View>
   );
 };
@@ -60,11 +100,22 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 28,
     textAlign: "center",
-    textTransform: "uppercase"
+    textTransform: "uppercase",
   },
   focusCell: {
-    borderBottomColor: '#6562FF',
+    borderBottomColor: "#6562FF",
     borderBottomWidth: 1,
+  },
+  infoText: {
+    color: "#484848",
+    marginTop: 12,
+  },
+  connectButton: {
+    marginTop: 36,
+    alignSelf: "stretch",
+    marginLeft: 12,
+    marginRight: 12,
+    borderRadius: 6,
   },
 });
 
