@@ -1,6 +1,6 @@
 import { SafeAreaView } from "react-native";
 import { ThemeProvider, createTheme } from "@rneui/themed";
-import ConnectDeviceView from "./components/views/ConnectDeviceView";
+import ConnectDeviceView from "./views/ConnectDeviceView";
 
 const theme = createTheme({
   mode: "light",

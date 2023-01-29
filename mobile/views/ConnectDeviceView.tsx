@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
-import { Text } from "@rneui/themed";
+import { Text, Button } from "@rneui/themed";
 import { CodeField, Cursor } from "react-native-confirmation-code-field";
 
 const ConnectDeviceView = () => {
@@ -32,6 +32,7 @@ const ConnectDeviceView = () => {
         renderCell={renderCell}
         rootStyle={styles.codeFiledRoot}
       />
+      <Button>CONNECT</Button>
     </View>
   );
 };
