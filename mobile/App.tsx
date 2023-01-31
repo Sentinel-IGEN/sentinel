@@ -1,6 +1,10 @@
 import { SafeAreaView } from "react-native";
 import { ThemeProvider, createTheme } from "@rneui/themed";
 import ConnectDeviceView from "./views/ConnectDeviceView";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+
+const Stack = createNativeStackNavigator();
 
 const theme = createTheme({
   mode: "light",
@@ -22,9 +26,14 @@ const theme = createTheme({
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
-      <SafeAreaView style={{ flex: 1 }}>
-        <ConnectDeviceView />
-      </SafeAreaView>
+      <NavigationContainer>
+        <SafeAreaView style={{ flex: 1 }}>
+          <Stack.Navigator>
+            <Stack.Screen name="ConnectDevice" component={ConnectDeviceView} />
+          </Stack.Navigator>
+          <ConnectDeviceView />
+        </SafeAreaView>
+      </NavigationContainer>
     </ThemeProvider>
   );
 }
