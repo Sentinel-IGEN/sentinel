@@ -3,10 +3,9 @@ import { View, StyleSheet } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { CodeField, Cursor } from "react-native-confirmation-code-field";
 import { API_URL } from "@env";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
-const ConnectDeviceView = () => {
+const ConnectDeviceView = ({ navigation }) => {
   const [value, setValue] = useState("");
   const [isFetching, setIsFetching] = useState(false);
 
@@ -20,7 +19,7 @@ const ConnectDeviceView = () => {
 
   const handleSubmit = async () => {
     try {
-      setIsFetching(true)
+      setIsFetching(true);
 
       const res = await fetch(`${API_URL}`, {
         method: "POST",
@@ -32,18 +31,24 @@ const ConnectDeviceView = () => {
       });
 
       const content = await res.json();
-      
+
       // save data in local storage
       try {
-        await AsyncStorage.multiSet([['@userId', content._id], ['@embeddedDeviceId', content.embeddedDeviceId]])
+        await AsyncStorage.multiSet([
+          ["@userId", content._id],
+          ["@embeddedDeviceId", content.embeddedDeviceId],
+        ]);
       } catch (e) {
-        console.log("error saving user connection info")
+        console.log("error saving user connection info");
       }
-
     } catch (err) {
       console.log(err);
     } finally {
-      setIsFetching(false)
+      setIsFetching(false);
+
+      // switch views
+      // technically this should occur if the asyncstorage multiset is successful, but we aren't handling error states at the moment, so the view will always change for the time being
+      navigation.push("ConnectPhone");
     }
   };
 
@@ -55,8 +60,7 @@ const ConnectDeviceView = () => {
         padding: 20,
         justifyContent: "center",
         alignItems: "center",
-      }}
-    >
+      }}>
       <Text h1>Connect your bike</Text>
       <CodeField
         value={value}
@@ -70,7 +74,10 @@ const ConnectDeviceView = () => {
         Please enter the Sentinel authentication code in your included
         registration card.
       </Text>
-      <Button containerStyle={styles.connectButton} onPress={handleSubmit} disabled={value.length < 6 || isFetching}>
+      <Button
+        containerStyle={styles.connectButton}
+        onPress={handleSubmit}
+        disabled={value.length < 6 || isFetching}>
         CONNECT
       </Button>
     </View>
