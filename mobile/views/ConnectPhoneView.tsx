@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { API_URL } from "@env";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import PhoneInput from "react-native-phone-number-input";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ConnectPhoneView = ({ navigation }) => {
   const [value, setValue] = useState("");
@@ -13,14 +13,32 @@ const ConnectPhoneView = ({ navigation }) => {
 
   const phoneInput = React.useRef<PhoneInput>(null);
 
-  // TODO: finish submit logic
   const handleSubmit = async () => {
     try {
       setIsFetching(true);
+
+      const res = await fetch(`${API_URL}/registerPhoneNumber`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phoneNumber: formattedValue }),
+      });
+
+      const content = await res.json();
+      console.log(content);
+
+      // save phone number is local storage
+      await AsyncStorage.setItem("@phoneNumber", formattedValue);
     } catch (err) {
       console.log(err);
     } finally {
       setIsFetching(false);
+
+      // switch views
+      // technically this should only occur if request was successful, but we aren't handling error states at the moment
+      navigation.push("VerifyPhone");
     }
   };
 

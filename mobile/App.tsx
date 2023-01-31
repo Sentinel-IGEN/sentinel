@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import ConnectDeviceView from "./views/ConnectDeviceView";
 import ConnectPhoneView from "./views/ConnectPhoneView";
+import VerifyPhoneView from "./views/VerifyPhoneView";
+import HomeView from "./views/HomeView";
 
 const Stack = createNativeStackNavigator();
 
@@ -41,6 +43,8 @@ export default function App() {
             }}>
             <Stack.Screen name="ConnectDevice" component={ConnectDeviceView} />
             <Stack.Screen name="ConnectPhone" component={ConnectPhoneView} />
+            <Stack.Screen name="VerifyPhone" component={VerifyPhoneView} />
+            <Stack.Screen name="Home" component={HomeView} />
           </Stack.Navigator>
         </SafeAreaView>
       </NavigationContainer>

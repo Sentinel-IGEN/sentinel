@@ -5,7 +5,7 @@ import { CodeField, Cursor } from "react-native-confirmation-code-field";
 import { API_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const ConnectDeviceView = ({ navigation }) => {
+const VerifyPhoneView = ({ navigation }) => {
   const [value, setValue] = useState("");
   const [isFetching, setIsFetching] = useState(false);
 
@@ -20,39 +20,28 @@ const ConnectDeviceView = ({ navigation }) => {
   const handleSubmit = async () => {
     try {
       setIsFetching(true);
-      console.log(API_URL);
+      const userId = await AsyncStorage.getItem("@userId");
+      const phoneNumber = await AsyncStorage.getItem("@phoneNumber");
 
-      const res = await fetch(`${API_URL}`, {
+      const res = await fetch(`${API_URL}/verifyPhoneNumber`, {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ embeddedDeviceId: value.toLowerCase() }),
+        body: JSON.stringify({ phoneNumber, userId, oneTimePassword: value }),
       });
 
       const content = await res.json();
-
-      console.log("user created");
       console.log(content);
-
-      // save data in local storage
-      try {
-        await AsyncStorage.multiSet([
-          ["@userId", content._id],
-          ["@embeddedDeviceId", content.embeddedDeviceId],
-        ]);
-      } catch (e) {
-        console.log("error saving user connection info");
-      }
     } catch (err) {
       console.log(err);
     } finally {
       setIsFetching(false);
 
       // switch views
-      // technically this should occur only if the asyncstorage multiset is successful, but we aren't handling error states at the moment, so the view will always change for the time being
-      navigation.push("ConnectPhone");
+      // technically this should occur only if the verification is successful, but we aren't handling error states at the moment, so the view will always change for the time being
+      navigation.push("Home");
     }
   };
 
@@ -65,7 +54,7 @@ const ConnectDeviceView = ({ navigation }) => {
         justifyContent: "center",
         alignItems: "center",
       }}>
-      <Text h1>Connect your bike</Text>
+      <Text h1>Verify Your Phone</Text>
       <CodeField
         value={value}
         onChangeText={setValue}
@@ -73,16 +62,16 @@ const ConnectDeviceView = ({ navigation }) => {
         textContentType="oneTimeCode"
         renderCell={renderCell}
         rootStyle={styles.codeFiledRoot}
+        keyboardType="numeric"
       />
       <Text style={styles.infoText}>
-        Please enter the Sentinel authentication code in your included
-        registration card.
+        Enter the one time password that was sent to your device.
       </Text>
       <Button
         containerStyle={styles.connectButton}
         onPress={handleSubmit}
         disabled={value.length < 6 || isFetching}>
-        CONNECT
+        VERIFY
       </Button>
     </View>
   );
@@ -130,4 +119,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ConnectDeviceView;
+export default VerifyPhoneView;
