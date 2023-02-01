@@ -1,11 +1,18 @@
 import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
 import * as mqtt from 'mqtt';
+import { WebSocketListener } from 'src/modules/websocket/websocket.gateway';
 
 @Injectable()
 export class MqttService implements OnApplicationBootstrap {
-    private client: mqtt.MqttClient | undefined;
-    private readonly subscribedTopics = ['device_health/#', 'lock_status/#', 'motion_status/#', 'GPS/#'];
-    private readonly publishTopics = ["alarm", "lock", "motion_threshold"];
+    client: mqtt.MqttClient | undefined;
+    subscribedTopics = ['device_health/#', 'lock_status/#', 'motion_status/#', 'GPS/#'];
+    publishTopics = ["alarm", "lock", "motion_threshold"];
+    private readonly webSocketListener: WebSocketListener;
+
+    constructor(webSocketListener: WebSocketListener) {
+        this.webSocketListener = webSocketListener;
+        this.webSocketListener.registerMQTTCallback(this.publishMessage.bind(this));
+    };
 
     onApplicationBootstrap() {
         Logger.debug(`MQTT Service startup: Connecting to ${process.env.MQTT_CLUSTER_URL}`);
@@ -28,12 +35,16 @@ export class MqttService implements OnApplicationBootstrap {
         });
 
         this.client.on('message', (topic, payload) => {
-            Logger.debug(`[Topic: ${topic}] Recieved message: ${payload}`);
+            const [parsedTopic, deviceName] = topic.split("/");
+            this.webSocketListener.sendMessage(deviceName, parsedTopic, payload.toString());
+            Logger.log(`[Topic: ${topic}] Recieved message: ${payload}`);
         })
     }
 
     publishMessage(topic: string, device: string, message: string) {
+        Logger.log("Publish MQTT message");
         if (!this.publishTopics.includes(topic)) {
+            Logger.error("Failed to publish topic, topic is not accepted");
             return false;
         }
         const targetTopic = topic + "/" + device;
