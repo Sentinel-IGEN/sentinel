@@ -3,10 +3,10 @@ import { ThemeProvider, createTheme } from "@rneui/themed";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import ConnectDeviceView from "./views/ConnectDeviceView";
-import ConnectPhoneView from "./views/ConnectPhoneView";
-import VerifyPhoneView from "./views/VerifyPhoneView";
-import HomeView from "./views/HomeView";
+import ConnectDeviceView from "./views/Registration/ConnectDeviceView";
+import ConnectPhoneView from "./views/Registration/ConnectPhoneView";
+import VerifyPhoneView from "./views/Registration/VerifyPhoneView";
+import HomeView from "./views/Home/HomeView";
 
 const Stack = createNativeStackNavigator();
 
@@ -41,10 +41,16 @@ export default function App() {
               },
               headerTintColor: "#222222",
             }}>
+            <Stack.Screen
+              name="Home"
+              component={HomeView}
+              options={{
+                headerShown: false,
+              }}
+            />
             <Stack.Screen name="ConnectDevice" component={ConnectDeviceView} />
             <Stack.Screen name="ConnectPhone" component={ConnectPhoneView} />
             <Stack.Screen name="VerifyPhone" component={VerifyPhoneView} />
-            <Stack.Screen name="Home" component={HomeView} />
           </Stack.Navigator>
         </SafeAreaView>
       </NavigationContainer>
