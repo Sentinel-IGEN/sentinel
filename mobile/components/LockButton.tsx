@@ -1,27 +1,36 @@
 import React from "react";
-import { Button } from "react-native";
+import { Button } from "@rneui/themed";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { LockLoadingState, LockState } from "../recoil_state";
+import { StyleSheet } from "react-native";
+import { sendPostRequest } from "../helpers/Requests";
+
+const styles = StyleSheet.create({
+  button: {
+    alignSelf: "stretch",
+    marginLeft: 12,
+    marginRight: 12,
+    marginTop: 12,
+    borderRadius: 6,
+  },
+});
 
 export default function LockButton() {
-    const ws = React.useRef(new WebSocket('ws://localhost:3000'));
-    ws.current.onopen = () => {
-      const data = {command: 'register', device: 'device1'};
-      ws.current.send(JSON.stringify(data));
-    }
-  
-    ws.current.onmessage = data => {
-      console.log(data.data);
-    }
-  
-    const [lockState, setLockState] = React.useState(false);
-  
-    const toggleLock = () => {
-      const data = {command: lockState ? 'unlock' : 'lock'};
-      setLockState(state => !state);
-      ws.current.send(JSON.stringify(data));
-    }
+  const lockState = useRecoilValue(LockState);
+  const [isLoading, setIsLoading] = useRecoilState(LockLoadingState);
 
-    return(
-      <Button color='#007AFF' title={lockState ? "Unlock" : "Lock"} onPress={toggleLock}></Button>
-    )
+  const toggleLock = async () => {
+    setIsLoading(true);
+    sendPostRequest('mobile/toggleLock', { status: !lockState, device: "device1" })
+  };
 
+  return (
+    <Button
+      containerStyle={styles.button}
+      color="#007AFF"
+      loading={isLoading}
+      title={lockState ? "Unlock" : "Lock"}
+      onPress={toggleLock}
+    ></Button>
+  );
 }

@@ -1,17 +1,8 @@
-import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View, SafeAreaView } from "react-native";
 import { ThemeProvider, createTheme } from "@rneui/themed";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import PushNotifications from "./components/PushNotifications";
-import ConnectDeviceView from "./views/ConnectDeviceView";
-import ConnectPhoneView from "./views/ConnectPhoneView";
-import VerifyPhoneView from "./views/VerifyPhoneView";
-import HomeView from "./views/HomeView";
-import LockButton from "./components/LockButton";
-
-const Stack = createNativeStackNavigator();
+import React from "react";
+import { RecoilRoot } from "recoil";
+import NavigationStackView from "./views/NavigationStackView";
 
 const theme = createTheme({
   mode: "light",
@@ -21,7 +12,7 @@ const theme = createTheme({
   components: {
     Text: {
       h1Style: {
-        fontFamily: "Roboto",
+        // fontFamily: "Roboto",
         fontWeight: "bold",
         fontSize: 36,
         color: "#171587",
@@ -31,29 +22,11 @@ const theme = createTheme({
 });
 
 export default function App() {
-
-
   return (
     <ThemeProvider theme={theme}>
-      <NavigationContainer>
-        <SafeAreaView style={{ flex: 1 }}>
-          <Stack.Navigator
-            screenOptions={{
-              headerShadowVisible: false,
-              title: "",
-              headerStyle: {
-                backgroundColor: "#F2F2F2",
-              },
-              headerTintColor: "#222222",
-            }}>
-            <Stack.Screen name="ConnectDevice" component={ConnectDeviceView} />
-            <Stack.Screen name="ConnectPhone" component={ConnectPhoneView} />
-            <Stack.Screen name="VerifyPhone" component={VerifyPhoneView} />
-            <Stack.Screen name="Home" component={HomeView} />
-            <LockButton />  
-          </Stack.Navigator>
-        </SafeAreaView>
-      </NavigationContainer>
+      <RecoilRoot>
+        <NavigationStackView />
+      </RecoilRoot>
     </ThemeProvider>
   );
 }

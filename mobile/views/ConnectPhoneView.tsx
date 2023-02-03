@@ -50,7 +50,8 @@ const ConnectPhoneView = ({ navigation }) => {
         padding: 20,
         justifyContent: "center",
         alignItems: "center",
-      }}>
+      }}
+    >
       <Text h1>Connect your phone</Text>
       <PhoneInput
         ref={phoneInput}
@@ -71,7 +72,8 @@ const ConnectPhoneView = ({ navigation }) => {
       <Button
         containerStyle={styles.connectButton}
         onPress={handleSubmit}
-        disabled={value.length < 6 || isFetching}>
+        disabled={value.length < 6 || isFetching}
+      >
         SEND VERIFICATION CODE
       </Button>
     </View>
