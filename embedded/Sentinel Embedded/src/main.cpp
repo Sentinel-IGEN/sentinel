@@ -38,11 +38,12 @@ const char *broker = "fb14f44e5bae4ffbb829c97b6cdc10eb.s2.eu.hivemq.cloud";
 
 // Subscribe Topics
 String topicLockRequest = String("lock/") + DEVICE_NAME;
-String topicMotionStatusRequest = String("motion_threshold/") + DEVICE_NAME;
-String subscribeTopics[] = {topicLockRequest, topicMotionStatusRequest};
+String topicMotionThresholdRequest = String("motion_threshold/") + DEVICE_NAME;
+String subscribeTopics[] = {topicLockRequest, topicMotionThresholdRequest};
 
 // Publish Topics
 String topicMotionStatus = String("motion_status/") + DEVICE_NAME;
+String topicMotionThresholdStatus = String("motion_theshold_status/") + DEVICE_NAME;
 String topicLockStatus = String("lock_status/") + DEVICE_NAME;
 String topicDeviceHealth = String("device_health/") + DEVICE_NAME;
 
@@ -105,7 +106,7 @@ static void mqttCallback(char *topic, byte *payload, unsigned int len)
         mqtt.publish(topicLockStatus.c_str(), lockStatus ? "1" : "0");
     }
 
-    if (String(topic) == topicMotionStatusRequest)
+    if (String(topic) == topicMotionThresholdRequest)
     {
         int newMotionDetectionThreshold = doc["command"];
         if (newMotionDetectionThreshold > 10 || newMotionDetectionThreshold < 0)
@@ -113,8 +114,8 @@ static void mqttCallback(char *topic, byte *payload, unsigned int len)
 
         motionDetectionThreshold = newMotionDetectionThreshold;
         mpu.setMotionDetectionThreshold(motionDetectionThreshold);
-        String response = "r" + String(motionDetectionThreshold);
-        mqtt.publish(topicMotionStatus.c_str(), response.c_str());
+        String response = String(motionDetectionThreshold);
+        mqtt.publish(topicMotionThresholdStatus.c_str(), response.c_str());
     }
 }
 

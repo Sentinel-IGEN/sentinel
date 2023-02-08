@@ -1,13 +1,17 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { CodeField, Cursor } from "react-native-confirmation-code-field";
 import { API_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { RecoilRoot, useSetRecoilState } from "recoil";
+import { RegisteredState } from "../recoil_state";
 
-const VerifyPhoneView = ({ navigation }) => {
+
+const VerifyPhoneView = () => {
   const [value, setValue] = useState("");
   const [isFetching, setIsFetching] = useState(false);
+  const setRegistered = useSetRecoilState(RegisteredState);
 
   const renderCell = ({ index, symbol, isFocused }) => (
     <View key={index} style={[styles.cellRoot, isFocused && styles.focusCell]}>
@@ -39,9 +43,10 @@ const VerifyPhoneView = ({ navigation }) => {
     } finally {
       setIsFetching(false);
 
-      // switch views
-      // technically this should occur only if the verification is successful, but we aren't handling error states at the moment, so the view will always change for the time being
-      navigation.push("Home");
+      // Switch views
+      // Technically this should occur only if the verification is successful, 
+      // but we aren't handling error states at the moment, so the view will always change for the time being.
+      setRegistered(true);
     }
   };
 

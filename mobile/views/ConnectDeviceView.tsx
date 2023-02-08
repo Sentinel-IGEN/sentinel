@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { CodeField, Cursor } from "react-native-confirmation-code-field";
 import { API_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { sendPostRequest } from "../helpers/Requests";
 
 const ConnectDeviceView = ({ navigation }) => {
   const [value, setValue] = useState("");
@@ -21,27 +22,17 @@ const ConnectDeviceView = ({ navigation }) => {
     try {
       setIsFetching(true);
       console.log(API_URL);
+      AsyncStorage.setItem("@embeddedDeviceId", value.toLowerCase());
 
-      const res = await fetch(`${API_URL}`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ embeddedDeviceId: value.toLowerCase() }),
-      });
-
+      const res = await sendPostRequest("", { embeddedDeviceId: value.toLowerCase() });
       const content = await res.json();
-
-      console.log("user created");
+      console.log("User created");
       console.log(content);
 
-      // save data in local storage
       try {
-        await AsyncStorage.multiSet([
-          ["@userId", content._id],
-          ["@embeddedDeviceId", content.embeddedDeviceId],
-        ]);
+        if (content._id) {
+          AsyncStorage.setItem("@userId", content._id);
+        }
       } catch (e) {
         console.log("error saving user connection info");
       }
@@ -49,9 +40,6 @@ const ConnectDeviceView = ({ navigation }) => {
       console.log(err);
     } finally {
       setIsFetching(false);
-
-      // switch views
-      // technically this should occur only if the asyncstorage multiset is successful, but we aren't handling error states at the moment, so the view will always change for the time being
       navigation.push("ConnectPhone");
     }
   };
@@ -64,7 +52,8 @@ const ConnectDeviceView = ({ navigation }) => {
         padding: 20,
         justifyContent: "center",
         alignItems: "center",
-      }}>
+      }}
+    >
       <Text h1>Connect your bike</Text>
       <CodeField
         value={value}
@@ -81,7 +70,8 @@ const ConnectDeviceView = ({ navigation }) => {
       <Button
         containerStyle={styles.connectButton}
         onPress={handleSubmit}
-        disabled={value.length < 6 || isFetching}>
+        disabled={value.length < 6 || isFetching}
+      >
         CONNECT
       </Button>
     </View>

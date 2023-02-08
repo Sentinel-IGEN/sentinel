@@ -1,4 +1,10 @@
-import { Controller, Body, Post, HttpException, Logger, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Body,
+  Post,
+  HttpException,
+  HttpCode,
+} from '@nestjs/common';
 import { SNSService, MongoService, MqttService } from '../../services';
 import { User } from '../../schemas/User.schema';
 import {
@@ -18,7 +24,7 @@ export class MobileController {
     private readonly SNSService: SNSService,
     private readonly MongoService: MongoService,
     private readonly MqttService: MqttService,
-  ) { }
+  ) {}
 
   // Create mobile user
   @Post('')
@@ -141,9 +147,13 @@ export class MobileController {
   @HttpCode(201)
   toggleLock(@Body() data: LockDeviceDTO) {
     const message = {
-      command: Number(data.status) // 0: unlock, 1: lock
-    }
-    const result = this.MqttService.publishMessage("lock", data.device, JSON.stringify(message));
+      command: Number(data.status), // 0: unlock, 1: lock
+    };
+    const result = this.MqttService.publishMessage(
+      'lock',
+      data.device,
+      JSON.stringify(message),
+    );
     return result ? 'success' : 'failure';
   }
 
@@ -151,9 +161,13 @@ export class MobileController {
   @HttpCode(201)
   setMotionThreshold(@Body() data: MotionThresholdDTO) {
     const message = {
-      command: Number(data.threshold) // 1 - 10
-    }
-    const result = this.MqttService.publishMessage("motion_threshold", data.device, JSON.stringify(message));
+      command: Number(data.threshold), // 1 - 10
+    };
+    const result = this.MqttService.publishMessage(
+      'motion_threshold',
+      data.device,
+      JSON.stringify(message),
+    );
     return result ? 'success' : 'failure';
   }
 
@@ -161,9 +175,13 @@ export class MobileController {
   @HttpCode(201)
   toggleAlarm(@Body() data: alarmDTO) {
     const message = {
-      command: Number(data.status) // 0:off, 1:on
-    }
-    const result = this.MqttService.publishMessage("alarm", data.device, JSON.stringify(message));
+      command: Number(data.status), // 0:off, 1:on
+    };
+    const result = this.MqttService.publishMessage(
+      'alarm',
+      data.device,
+      JSON.stringify(message),
+    );
     return result ? 'success' : 'failure';
   }
 
@@ -171,7 +189,11 @@ export class MobileController {
   @Post('/sendMQTTMessage')
   @HttpCode(201)
   sendMQTTMessage(@Body() data: SendMQTTMessageDTO) {
-    const result = this.MqttService.publishMessage(data.topic, data.device, data.message);
+    const result = this.MqttService.publishMessage(
+      data.topic,
+      data.device,
+      data.message,
+    );
     return result ? 'success' : 'failure';
   }
 
