@@ -38,15 +38,10 @@ const ConnectPhoneView = ({ navigation }) => {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: "column",
-        padding: 20,
-        justifyContent: "center",
-        alignItems: "center",
-      }}>
-      <Text h1>Connect your phone</Text>
+    <View style={styles.viewRoot}>
+      <Text h1 style={styles.header}>
+        Connect your phone
+      </Text>
       <PhoneInput
         ref={phoneInput}
         defaultValue={value}
@@ -66,7 +61,8 @@ const ConnectPhoneView = ({ navigation }) => {
       <Button
         containerStyle={styles.connectButton}
         onPress={handleSubmit}
-        disabled={value.length < 6 || isFetching}>
+        disabled={value.length < 6 || isFetching}
+      >
         SEND VERIFICATION CODE
       </Button>
     </View>
@@ -74,6 +70,15 @@ const ConnectPhoneView = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  viewRoot: {
+    flex: 1,
+    flexDirection: "column",
+    padding: 20,
+    alignItems: "center",
+  },
+  header: {
+    marginTop: "20%",
+  },
   infoText: {
     color: "#484848",
     marginTop: 12,

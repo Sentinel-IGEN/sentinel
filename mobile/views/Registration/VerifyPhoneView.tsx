@@ -47,15 +47,10 @@ const VerifyPhoneView = () => {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: "column",
-        padding: 20,
-        justifyContent: "center",
-        alignItems: "center",
-      }}>
-      <Text h1>Verify Your Phone</Text>
+    <View style={styles.viewRoot}>
+      <Text h1 style={styles.header}>
+        Verify Your Phone
+      </Text>
       <CodeField
         value={value}
         onChangeText={setValue}
@@ -71,7 +66,8 @@ const VerifyPhoneView = () => {
       <Button
         containerStyle={styles.connectButton}
         onPress={handleSubmit}
-        disabled={value.length < 6 || isFetching}>
+        disabled={value.length < 6 || isFetching}
+      >
         VERIFY
       </Button>
     </View>
@@ -79,6 +75,15 @@ const VerifyPhoneView = () => {
 };
 
 const styles = StyleSheet.create({
+  viewRoot: {
+    flex: 1,
+    flexDirection: "column",
+    padding: 20,
+    alignItems: "center",
+  },
+  header: {
+    marginTop: "20%",
+  },
   codeFiledRoot: {
     marginTop: 20,
     width: 320,

@@ -21,7 +21,9 @@ const ConnectDeviceView = ({ navigation }) => {
     try {
       setIsFetching(true);
 
-      const res = await sendPostRequest("", { embeddedDeviceId: value.toLowerCase() });
+      const res = await sendPostRequest("", {
+        embeddedDeviceId: value.toLowerCase(),
+      });
       const content = await res.json();
       console.log("User created");
       console.log(content);
@@ -42,16 +44,10 @@ const ConnectDeviceView = ({ navigation }) => {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: "column",
-        padding: 20,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text h1>Connect your bike</Text>
+    <View style={styles.viewRoot}>
+      <Text h1 style={styles.header}>
+        Connect your bike
+      </Text>
       <CodeField
         value={value}
         onChangeText={setValue}
@@ -76,6 +72,15 @@ const ConnectDeviceView = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  viewRoot: {
+    flex: 1,
+    flexDirection: "column",
+    padding: 20,
+    alignItems: "center",
+  },
+  header: {
+    marginTop: "20%",
+  },
   codeFiledRoot: {
     marginTop: 20,
     width: 320,
