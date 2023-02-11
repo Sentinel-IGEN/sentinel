@@ -62,7 +62,8 @@ export default function NavigationStackView() {
                 backgroundColor: "#F2F2F2",
               },
               headerTintColor: "#222222",
-            }}>
+            }}
+          >
             {!isRegistered && (
               <>
                 {/* Registration views */}
@@ -80,7 +81,9 @@ export default function NavigationStackView() {
             )}
             <Stack.Screen
               name="Home"
-              options={{ title: "Home" }}
+              options={{
+                headerShown: false,
+              }}
               component={HomeView}
             />
           </Stack.Navigator>
