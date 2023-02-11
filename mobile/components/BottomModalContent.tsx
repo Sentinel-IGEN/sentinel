@@ -5,10 +5,9 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import { StyleSheet, Text, View } from "react-native";
-import LockButton from "./LockButton";
 import AlarmButton from "./AlarmButton";
 import AlarmSensitivitySlider from "./AlarmSensitivitySlider";
-import { Icon } from "@rneui/base";
+import LockButton from "../views/Home/LockButton";
 
 interface Props {
   animatedIndex: SharedValue<number>;

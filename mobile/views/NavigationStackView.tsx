@@ -53,41 +53,36 @@ export default function NavigationStackView() {
   return (
     <ThemeProvider theme={theme}>
       <NavigationContainer>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F2" }}>
-          <Stack.Navigator
-            screenOptions={{
-              headerShadowVisible: false,
-              title: "",
-              headerStyle: {
-                backgroundColor: "#F2F2F2",
-              },
-              headerTintColor: "#222222",
+        <Stack.Navigator
+          screenOptions={{
+            headerShadowVisible: false,
+            title: "",
+            headerStyle: {
+              backgroundColor: "#F2F2F2",
+            },
+            headerTintColor: "#222222",
+          }}
+        >
+          {!isRegistered && (
+            <>
+              {/* Registration views */}
+              <Stack.Screen
+                name="ConnectDevice"
+                component={ConnectDeviceView}
+              />
+              <Stack.Screen name="ConnectPhone" component={ConnectPhoneView} />
+              <Stack.Screen name="VerifyPhone" component={VerifyPhoneView} />
+              {/* End registration views */}
+            </>
+          )}
+          <Stack.Screen
+            name="Home"
+            options={{
+              headerShown: false,
             }}
-          >
-            {!isRegistered && (
-              <>
-                {/* Registration views */}
-                <Stack.Screen
-                  name="ConnectDevice"
-                  component={ConnectDeviceView}
-                />
-                <Stack.Screen
-                  name="ConnectPhone"
-                  component={ConnectPhoneView}
-                />
-                <Stack.Screen name="VerifyPhone" component={VerifyPhoneView} />
-                {/* End registration views */}
-              </>
-            )}
-            <Stack.Screen
-              name="Home"
-              options={{
-                headerShown: false,
-              }}
-              component={HomeView}
-            />
-          </Stack.Navigator>
-        </SafeAreaView>
+            component={HomeView}
+          />
+        </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>
   );
