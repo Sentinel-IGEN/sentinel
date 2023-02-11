@@ -2,6 +2,7 @@ import { API_URL } from "@env";
 
 const sendPostRequest = async (endpoint: string, body: any): Promise<Response> => {
   try {
+    console.log(`POST at: ${API_URL}/${endpoint}`)
     const res = await fetch(`${API_URL}/${endpoint}`, {
       method: "POST",
       headers: {
