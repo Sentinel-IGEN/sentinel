@@ -1,12 +1,16 @@
 import React from "react";
+import { WS_URL } from "@env";
 import { View, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { useSetRecoilState } from "recoil";
+import { LockLoadingState, LockState } from "../recoil_state";
+
 import ClearAsyncStorageButton from "../components/ClearAsyncStorageButton";
 import LockButton from "../components/LockButton";
-import { LockLoadingState, LockState } from "../recoil_state";
-import { WS_URL } from "@env";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { sendPostRequest } from "../helpers/Requests";
+import BottomModal from "../components/BottomModal";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface WebSocketMessage {
   topic: string;
@@ -79,9 +83,10 @@ const HomeView = () => {
   }, []);
 
   return (
-    <View>
-      <LockButton />
+    <View style={{flex: 1}}>
+      <SafeAreaView />
       <ClearAsyncStorageButton />
+      <BottomModal />
     </View>
   );
 };

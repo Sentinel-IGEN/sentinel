@@ -4,16 +4,7 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import { LockLoadingState, LockState } from "../recoil_state";
 import { StyleSheet } from "react-native";
 import { sendPostRequest } from "../helpers/Requests";
-
-const styles = StyleSheet.create({
-  button: {
-    alignSelf: "stretch",
-    marginLeft: 12,
-    marginRight: 12,
-    marginTop: 12,
-    borderRadius: 6,
-  },
-});
+import { Icon } from "@rneui/themed";
 
 export default function LockButton() {
   const lockState = useRecoilValue(LockState);
@@ -21,16 +12,47 @@ export default function LockButton() {
 
   const toggleLock = async () => {
     setIsLoading(true);
-    sendPostRequest('mobile/toggleLock', { status: !lockState, device: "device1" })
+    sendPostRequest("mobile/toggleLock", {
+      status: !lockState,
+      device: "device1",
+    });
   };
+
+  const LockIcon = React.useMemo(() => {
+    return lockState ? (
+      <Icon containerStyle={styles.icon} type="antdesign" name="lock-open" size={30} />
+    ) : (
+      <Icon containerStyle={styles.icon} type="antdesign" name="lock" size={30} />
+    );
+  }, [lockState]);
 
   return (
     <Button
-      containerStyle={styles.button}
-      color="#007AFF"
+      containerStyle={styles.container}
+      buttonStyle={styles.button}
+      color="#B6A9D1"
+      titleStyle={{ color: "black" }}
       loading={isLoading}
       title={lockState ? "Unlock" : "Lock"}
       onPress={toggleLock}
+      radius="md"
+      icon={LockIcon}
+      iconPosition="top"
     ></Button>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: "50%",
+    margin: 10,
+  },
+  icon: {
+    margin: 10,
+  },
+  button: {
+    height: 100,
+    marginLeft: 20,
+    marginRight: 10,
+  },
+});

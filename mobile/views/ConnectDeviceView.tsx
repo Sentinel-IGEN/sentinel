@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, SafeAreaView } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { CodeField, Cursor } from "react-native-confirmation-code-field";
 import { API_URL } from "@env";
@@ -24,7 +24,9 @@ const ConnectDeviceView = ({ navigation }) => {
       console.log(API_URL);
       AsyncStorage.setItem("@embeddedDeviceId", value.toLowerCase());
 
-      const res = await sendPostRequest("", { embeddedDeviceId: value.toLowerCase() });
+      const res = await sendPostRequest("", {
+        embeddedDeviceId: value.toLowerCase(),
+      });
       const content = await res.json();
       console.log("User created");
       console.log(content);
@@ -45,36 +47,38 @@ const ConnectDeviceView = ({ navigation }) => {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: "column",
-        padding: 20,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text h1>Connect your bike</Text>
-      <CodeField
-        value={value}
-        onChangeText={setValue}
-        cellCount={6}
-        textContentType="oneTimeCode"
-        renderCell={renderCell}
-        rootStyle={styles.codeFiledRoot}
-      />
-      <Text style={styles.infoText}>
-        Please enter the Sentinel authentication code in your included
-        registration card.
-      </Text>
-      <Button
-        containerStyle={styles.connectButton}
-        onPress={handleSubmit}
-        disabled={value.length < 6 || isFetching}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F2" }}>
+      <View
+        style={{
+          flex: 1,
+          flexDirection: "column",
+          padding: 20,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
       >
-        CONNECT
-      </Button>
-    </View>
+        <Text h1>Connect your bike</Text>
+        <CodeField
+          value={value}
+          onChangeText={setValue}
+          cellCount={6}
+          textContentType="oneTimeCode"
+          renderCell={renderCell}
+          rootStyle={styles.codeFiledRoot}
+        />
+        <Text style={styles.infoText}>
+          Please enter the Sentinel authentication code in your included
+          registration card.
+        </Text>
+        <Button
+          containerStyle={styles.connectButton}
+          onPress={handleSubmit}
+          disabled={value.length < 6 || isFetching}
+        >
+          CONNECT
+        </Button>
+      </View>
+    </SafeAreaView>
   );
 };
 

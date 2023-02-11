@@ -51,19 +51,14 @@ export default function NavigationStackView() {
     return (
       <ThemeProvider theme={theme}>
           <NavigationContainer>
-            <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F2"}}>
               <Stack.Navigator
                 screenOptions={{
                   headerShadowVisible: false,
-                  title: "",
-                  headerStyle: {
-                    backgroundColor: "#F2F2F2",
-                  },
-                  headerTintColor: "#222222",
+                  headerShown: false,
                 }}>
                 {isRegistered ? 
                 (<>
-                  <Stack.Screen name="Home" options={{ title: 'Home' }} component={HomeView} />
+                  <Stack.Screen name="Home" component={HomeView} />
                 </>) : (
                 <>
                   <Stack.Screen name="ConnectDevice" component={ConnectDeviceView} />
@@ -71,10 +66,8 @@ export default function NavigationStackView() {
                   <Stack.Screen
                     name="VerifyPhone"
                     component={VerifyPhoneView} />
-                    <Stack.Screen name="Home" options={{ title: 'Home' }} component={HomeView} />
                 </>)}
               </Stack.Navigator>
-            </SafeAreaView>
           </NavigationContainer>
       </ThemeProvider>
     );

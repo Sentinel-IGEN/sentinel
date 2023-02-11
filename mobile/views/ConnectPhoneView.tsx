@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, SafeAreaView } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { API_URL } from "@env";
 import PhoneInput from "react-native-phone-number-input";
@@ -43,40 +43,42 @@ const ConnectPhoneView = ({ navigation }) => {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: "column",
-        padding: 20,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text h1>Connect your phone</Text>
-      <PhoneInput
-        ref={phoneInput}
-        defaultValue={value}
-        defaultCode="CA"
-        layout="first"
-        onChangeText={setValue}
-        onChangeFormattedText={setFormattedValue}
-        withDarkTheme
-        withShadow
-        autoFocus
-        containerStyle={styles.phoneInputContainer}
-      />
-      <Text style={styles.infoText}>
-        Register your phone number to get instant alerts and keep your bike
-        safe.
-      </Text>
-      <Button
-        containerStyle={styles.connectButton}
-        onPress={handleSubmit}
-        disabled={value.length < 6 || isFetching}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F2" }}>
+      <View
+        style={{
+          flex: 1,
+          flexDirection: "column",
+          padding: 20,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
       >
-        SEND VERIFICATION CODE
-      </Button>
-    </View>
+        <Text h1>Connect your phone</Text>
+        <PhoneInput
+          ref={phoneInput}
+          defaultValue={value}
+          defaultCode="CA"
+          layout="first"
+          onChangeText={setValue}
+          onChangeFormattedText={setFormattedValue}
+          withDarkTheme
+          withShadow
+          autoFocus
+          containerStyle={styles.phoneInputContainer}
+        />
+        <Text style={styles.infoText}>
+          Register your phone number to get instant alerts and keep your bike
+          safe.
+        </Text>
+        <Button
+          containerStyle={styles.connectButton}
+          onPress={handleSubmit}
+          disabled={value.length < 6 || isFetching}
+        >
+          SEND VERIFICATION CODE
+        </Button>
+      </View>
+    </SafeAreaView>
   );
 };
 
