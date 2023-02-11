@@ -1,12 +1,12 @@
 import React from "react";
 import { Button } from "@rneui/themed";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { LockLoadingState, LockState } from "../recoil_state";
+import { LockLoadingState, LockState } from "../../recoil_state";
 import { StyleSheet } from "react-native";
-import { sendPostRequest } from "../helpers/Requests";
 import { Icon } from "@rneui/themed";
+import { sendPostRequest } from "../../helpers/Requests";
 
-export default function LockButton() {
+export default function LockButton(props) {
   const lockState = useRecoilValue(LockState);
   const [isLoading, setIsLoading] = useRecoilState(LockLoadingState);
 
@@ -38,7 +38,7 @@ export default function LockButton() {
       radius="md"
       icon={LockIcon}
       iconPosition="top"
-    ></Button>
+    />
   );
 }
 

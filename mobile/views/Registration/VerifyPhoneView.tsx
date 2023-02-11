@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { CodeField, Cursor } from "react-native-confirmation-code-field";
-import { API_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { RecoilRoot, useSetRecoilState } from "recoil";
-import { RegisteredState } from "../recoil_state";
-
+import { useSetRecoilState } from "recoil";
+import { RegisteredState } from "../../recoil_state";
+import { sendPostRequest } from "../../helpers/Requests";
 
 const VerifyPhoneView = () => {
   const [value, setValue] = useState("");
@@ -27,13 +26,10 @@ const VerifyPhoneView = () => {
       const userId = await AsyncStorage.getItem("@userId");
       const phoneNumber = await AsyncStorage.getItem("@phoneNumber");
 
-      const res = await fetch(`${API_URL}/verifyPhoneNumber`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phoneNumber, userId, oneTimePassword: value }),
+      const res = await sendPostRequest("verifyPhoneNumber", {
+        phoneNumber,
+        userId,
+        oneTimePassword: value,
       });
 
       const content = await res.json();
@@ -44,22 +40,17 @@ const VerifyPhoneView = () => {
       setIsFetching(false);
 
       // Switch views
-      // Technically this should occur only if the verification is successful, 
+      // Technically this should occur only if the verification is successful,
       // but we aren't handling error states at the moment, so the view will always change for the time being.
       setRegistered(true);
     }
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: "column",
-        padding: 20,
-        justifyContent: "center",
-        alignItems: "center",
-      }}>
-      <Text h1>Verify Your Phone</Text>
+    <View style={styles.viewRoot}>
+      <Text h1 style={styles.header}>
+        Verify Your Phone
+      </Text>
       <CodeField
         value={value}
         onChangeText={setValue}
@@ -75,7 +66,8 @@ const VerifyPhoneView = () => {
       <Button
         containerStyle={styles.connectButton}
         onPress={handleSubmit}
-        disabled={value.length < 6 || isFetching}>
+        disabled={value.length < 6 || isFetching}
+      >
         VERIFY
       </Button>
     </View>
@@ -83,6 +75,15 @@ const VerifyPhoneView = () => {
 };
 
 const styles = StyleSheet.create({
+  viewRoot: {
+    flex: 1,
+    flexDirection: "column",
+    padding: 20,
+    alignItems: "center",
+  },
+  header: {
+    marginTop: "20%",
+  },
   codeFiledRoot: {
     marginTop: 20,
     width: 320,
