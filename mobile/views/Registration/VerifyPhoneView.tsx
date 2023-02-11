@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { CodeField, Cursor } from "react-native-confirmation-code-field";
-import { API_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { sendPostRequest } from "../helpers/Requests";
+import { useSetRecoilState } from "recoil";
+import { RegisteredState } from "../../recoil_state";
+import { sendPostRequest } from "../../helpers/Requests";
 
-const ConnectDeviceView = ({ navigation }) => {
+const VerifyPhoneView = () => {
   const [value, setValue] = useState("");
   const [isFetching, setIsFetching] = useState(false);
+  const setRegistered = useSetRecoilState(RegisteredState);
 
   const renderCell = ({ index, symbol, isFocused }) => (
     <View key={index} style={[styles.cellRoot, isFocused && styles.focusCell]}>
@@ -21,40 +23,34 @@ const ConnectDeviceView = ({ navigation }) => {
   const handleSubmit = async () => {
     try {
       setIsFetching(true);
-      console.log(API_URL);
-      AsyncStorage.setItem("@embeddedDeviceId", value.toLowerCase());
+      const userId = await AsyncStorage.getItem("@userId");
+      const phoneNumber = await AsyncStorage.getItem("@phoneNumber");
 
-      const res = await sendPostRequest("", { embeddedDeviceId: value.toLowerCase() });
+      const res = await sendPostRequest("verifyPhoneNumber", {
+        phoneNumber,
+        userId,
+        oneTimePassword: value,
+      });
+
       const content = await res.json();
-      console.log("User created");
       console.log(content);
-
-      try {
-        if (content._id) {
-          AsyncStorage.setItem("@userId", content._id);
-        }
-      } catch (e) {
-        console.log("error saving user connection info");
-      }
     } catch (err) {
       console.log(err);
     } finally {
       setIsFetching(false);
-      navigation.push("ConnectPhone");
+
+      // Switch views
+      // Technically this should occur only if the verification is successful,
+      // but we aren't handling error states at the moment, so the view will always change for the time being.
+      setRegistered(true);
     }
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: "column",
-        padding: 20,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text h1>Connect your bike</Text>
+    <View style={styles.viewRoot}>
+      <Text h1 style={styles.header}>
+        Verify Your Phone
+      </Text>
       <CodeField
         value={value}
         onChangeText={setValue}
@@ -62,23 +58,32 @@ const ConnectDeviceView = ({ navigation }) => {
         textContentType="oneTimeCode"
         renderCell={renderCell}
         rootStyle={styles.codeFiledRoot}
+        keyboardType="numeric"
       />
       <Text style={styles.infoText}>
-        Please enter the Sentinel authentication code in your included
-        registration card.
+        Enter the one time password that was sent to your device.
       </Text>
       <Button
         containerStyle={styles.connectButton}
         onPress={handleSubmit}
         disabled={value.length < 6 || isFetching}
       >
-        CONNECT
+        VERIFY
       </Button>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  viewRoot: {
+    flex: 1,
+    flexDirection: "column",
+    padding: 20,
+    alignItems: "center",
+  },
+  header: {
+    marginTop: "20%",
+  },
   codeFiledRoot: {
     marginTop: 20,
     width: 320,
@@ -120,4 +125,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ConnectDeviceView;
+export default VerifyPhoneView;

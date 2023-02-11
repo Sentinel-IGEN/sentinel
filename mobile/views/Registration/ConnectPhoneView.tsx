@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Text, Button } from "@rneui/themed";
-import { API_URL } from "@env";
 import PhoneInput from "react-native-phone-number-input";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { sendPostRequest } from "../../helpers/Requests";
 
 const ConnectPhoneView = ({ navigation }) => {
   const [value, setValue] = useState("");
@@ -17,13 +17,8 @@ const ConnectPhoneView = ({ navigation }) => {
     try {
       setIsFetching(true);
 
-      const res = await fetch(`${API_URL}/registerPhoneNumber`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phoneNumber: formattedValue }),
+      const res = await sendPostRequest("registerPhoneNumber", {
+        phoneNumber: formattedValue,
       });
 
       const content = await res.json();
@@ -43,16 +38,10 @@ const ConnectPhoneView = ({ navigation }) => {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: "column",
-        padding: 20,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text h1>Connect your phone</Text>
+    <View style={styles.viewRoot}>
+      <Text h1 style={styles.header}>
+        Connect your phone
+      </Text>
       <PhoneInput
         ref={phoneInput}
         defaultValue={value}
@@ -81,6 +70,15 @@ const ConnectPhoneView = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  viewRoot: {
+    flex: 1,
+    flexDirection: "column",
+    padding: 20,
+    alignItems: "center",
+  },
+  header: {
+    marginTop: "20%",
+  },
   infoText: {
     color: "#484848",
     marginTop: 12,

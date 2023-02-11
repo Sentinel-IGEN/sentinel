@@ -1,12 +1,13 @@
 import React from "react";
-import { View, Alert } from "react-native";
+import { View, Alert, StyleSheet } from "react-native";
 import { useSetRecoilState } from "recoil";
-import ClearAsyncStorageButton from "../components/ClearAsyncStorageButton";
-import LockButton from "../components/LockButton";
-import { LockLoadingState, LockState } from "../recoil_state";
 import { WS_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { sendPostRequest } from "../helpers/Requests";
+import MapView from "./MapView";
+import { sendPostRequest } from "../../helpers/Requests";
+import ClearAsyncStorageButton from "./ClearAsyncStorageButton";
+import LockButton from "./LockButton";
+import { LockLoadingState, LockState } from "../../recoil_state";
 
 interface WebSocketMessage {
   topic: string;
@@ -80,10 +81,22 @@ const HomeView = () => {
 
   return (
     <View>
-      <LockButton />
-      <ClearAsyncStorageButton />
+      <MapView style={styles.map} />
+      <View style={styles.buttons}>
+        <LockButton />
+        <ClearAsyncStorageButton />
+      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  buttons: {
+    position: "absolute",
+    bottom: 20,
+    width: "100%",
+  },
+  map: { height: "100%", width: "100%" },
+});
 
 export default HomeView;
