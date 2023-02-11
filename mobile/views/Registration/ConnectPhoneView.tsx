@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Text, Button } from "@rneui/themed";
-import { API_URL } from "@env";
 import PhoneInput from "react-native-phone-number-input";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { sendPostRequest } from "../../helpers/Requests";
 
 const ConnectPhoneView = ({ navigation }) => {
   const [value, setValue] = useState("");
@@ -17,13 +17,8 @@ const ConnectPhoneView = ({ navigation }) => {
     try {
       setIsFetching(true);
 
-      const res = await fetch(`${API_URL}/registerPhoneNumber`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phoneNumber: formattedValue }),
+      const res = await sendPostRequest("registerPhoneNumber", {
+        phoneNumber: formattedValue,
       });
 
       const content = await res.json();
@@ -50,8 +45,7 @@ const ConnectPhoneView = ({ navigation }) => {
         padding: 20,
         justifyContent: "center",
         alignItems: "center",
-      }}
-    >
+      }}>
       <Text h1>Connect your phone</Text>
       <PhoneInput
         ref={phoneInput}
@@ -72,8 +66,7 @@ const ConnectPhoneView = ({ navigation }) => {
       <Button
         containerStyle={styles.connectButton}
         onPress={handleSubmit}
-        disabled={value.length < 6 || isFetching}
-      >
+        disabled={value.length < 6 || isFetching}>
         SEND VERIFICATION CODE
       </Button>
     </View>

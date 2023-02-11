@@ -12,7 +12,6 @@ const theme = createTheme({
   components: {
     Text: {
       h1Style: {
-        // fontFamily: "Roboto",
         fontWeight: "bold",
         fontSize: 36,
         color: "#171587",
