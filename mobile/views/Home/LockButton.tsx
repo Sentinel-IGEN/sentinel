@@ -1,9 +1,9 @@
 import React from "react";
 import { Button } from "@rneui/themed";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { LockLoadingState, LockState } from "../recoil_state";
+import { LockLoadingState, LockState } from "../../recoil_state";
 import { StyleSheet } from "react-native";
-import { sendPostRequest } from "../helpers/Requests";
+import { sendPostRequest } from "../../helpers/Requests";
 
 const styles = StyleSheet.create({
   button: {
@@ -15,13 +15,16 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function LockButton() {
+export default function LockButton(props) {
   const lockState = useRecoilValue(LockState);
   const [isLoading, setIsLoading] = useRecoilState(LockLoadingState);
 
   const toggleLock = async () => {
     setIsLoading(true);
-    sendPostRequest('mobile/toggleLock', { status: !lockState, device: "device1" })
+    sendPostRequest("mobile/toggleLock", {
+      status: !lockState,
+      device: "device1",
+    });
   };
 
   return (
@@ -31,6 +34,7 @@ export default function LockButton() {
       loading={isLoading}
       title={lockState ? "Unlock" : "Lock"}
       onPress={toggleLock}
-    ></Button>
+      {...props}
+    />
   );
 }
