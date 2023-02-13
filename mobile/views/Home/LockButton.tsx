@@ -12,7 +12,7 @@ export default function LockButton(props) {
 
   const toggleLock = async () => {
     setIsLoading(true);
-    sendPostRequest("mobile/toggleLock", {
+    sendPostRequest("toggleLock", {
       status: !lockState,
       device: "device1",
     });
@@ -20,18 +20,30 @@ export default function LockButton(props) {
 
   const LockIcon = React.useMemo(() => {
     return lockState ? (
-      <Icon containerStyle={styles.icon} type="antdesign" name="lock-open" size={30} />
+      <Icon
+        containerStyle={styles.icon}
+        type="antdesign"
+        name="unlock"
+        size={30}
+        color="white"
+      />
     ) : (
-      <Icon containerStyle={styles.icon} type="antdesign" name="lock" size={30} />
+      <Icon
+        containerStyle={styles.icon}
+        type="antdesign"
+        name="lock"
+        size={30}
+        color="white"
+      />
     );
   }, [lockState]);
 
   return (
     <Button
-      containerStyle={styles.container}
+      color="#091156"
+      containerStyle={styles.buttonContainer}
       buttonStyle={styles.button}
-      color="#B6A9D1"
-      titleStyle={{ color: "black" }}
+      titleStyle={styles.buttonTitle}
       loading={isLoading}
       title={lockState ? "Unlock" : "Lock"}
       onPress={toggleLock}
@@ -43,16 +55,22 @@ export default function LockButton(props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  buttonContainer: {
     width: "50%",
     margin: 10,
   },
   icon: {
     margin: 10,
+    marginBottom: 2,
+    color: "white",
   },
   button: {
     height: 100,
     marginLeft: 20,
-    marginRight: 10,
+    marginRight: 5,
+  },
+  buttonTitle: {
+    color: "white",
+    fontWeight: "300",
   },
 });

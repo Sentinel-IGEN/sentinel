@@ -66,7 +66,7 @@ const HomeView = () => {
           // Re-sync with device
           const lockState = lockStatus == "1";
           setLockState(lockState);
-          sendPostRequest("mobile/toggleLock", {
+          sendPostRequest("toggleLock", {
             status: lockState,
             device: "device1",
           });

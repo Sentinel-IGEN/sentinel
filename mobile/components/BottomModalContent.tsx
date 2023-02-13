@@ -8,6 +8,8 @@ import { StyleSheet, Text, View } from "react-native";
 import AlarmButton from "./AlarmButton";
 import AlarmSensitivitySlider from "./AlarmSensitivitySlider";
 import LockButton from "../views/Home/LockButton";
+import ClearAsyncStorageButton from "../views/Home/ClearAsyncStorageButton";
+import { Icon } from "@rneui/themed";
 
 interface Props {
   animatedIndex: SharedValue<number>;
@@ -29,7 +31,10 @@ const BottomModalContent = (props: Props) => {
 
   return (
     <View style={styles.contentContainer}>
-      <Text style={styles.address}>576 West 44th Ave, Vancouver V3X 7T3</Text>
+      <View style={styles.addressContainer}>
+        <Icon name="gps-fixed" type="material" />
+        <Text style={styles.address}>576 West 44th Ave, Vancouver V3X 7T3</Text>
+      </View>
       <View style={styles.buttonContainer}>
         <LockButton />
         <AlarmButton />
@@ -37,6 +42,7 @@ const BottomModalContent = (props: Props) => {
       <Animated.View style={[styles.sliderContainer, containerAnimatedStyle]}>
         <AlarmSensitivitySlider />
       </Animated.View>
+      <ClearAsyncStorageButton />
     </View>
   );
 };
@@ -52,13 +58,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-evenly",
   },
+  addressContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    backgroundColor: "#EDEDED",
+    alignSelf: "baseline",
+    padding: 5,
+    paddingHorizontal: 10,
+    marginLeft: 15,
+    borderRadius: 20,
+  },
   address: {
-    paddingLeft: 15,
-    color: "white",
+    color: "black",
+    paddingHorizontal: 10,
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: "#525267",
+    backgroundColor: "white",
   },
 });
 

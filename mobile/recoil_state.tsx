@@ -1,18 +1,34 @@
 import { atom } from "recoil";
 
 const RegisteredState = atom({
-    key: "registeredState",
-    default: false
+  key: "registeredState",
+  default: false,
 });
 
 const LockState = atom({
-    key: "lockState",
-    default: false
-})
+  key: "lockState",
+  default: false,
+});
 
 const LockLoadingState = atom({
-    key: "lockLoadingState",
-    default: false
-})
+  key: "lockLoadingState",
+  default: false,
+});
 
-export {RegisteredState, LockState, LockLoadingState};
+const AlarmState = atom({
+  key: "alarmState",
+  default: false,
+});
+
+const AlarmLoadingState = atom({
+  key: "alarmLoadingState",
+  default: false,
+});
+
+export {
+  RegisteredState,
+  LockState,
+  LockLoadingState,
+  AlarmState,
+  AlarmLoadingState,
+};

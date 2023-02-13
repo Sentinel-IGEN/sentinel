@@ -1,12 +1,27 @@
 import React, { useState } from "react";
 import { Slider, Icon } from "@rneui/themed";
+import { debounce } from "lodash";
+import { sendPostRequest } from "../helpers/Requests";
 
 const AlarmSensitivitySlider = () => {
-  const [value, setValue] = useState(0);
+  const onValueChange = React.useRef(
+    debounce(async (value: Number) => {
+      await sendPostRequest("setMotionThreshold", {
+        device: "device1",
+        threshold: value,
+      })
+    }, 500)
+  ).current;
+
+  React.useEffect(() => {
+    return () => {
+      onValueChange.cancel();
+    }
+  }, [onValueChange])
+
   return (
     <Slider
-      value={value}
-      onValueChange={setValue}
+      onValueChange={onValueChange}
       maximumValue={10}
       minimumValue={0}
       step={1}

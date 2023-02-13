@@ -2,8 +2,7 @@ import React, { useMemo, useRef } from "react";
 import { StyleSheet } from "react-native";
 import BottomSheet from "@gorhom/bottom-sheet";
 import BottomModalContent from "./BottomModalContent";
-import {useSharedValue} from "react-native-reanimated";
-import { Icon } from "@rneui/base";
+import { useSharedValue } from "react-native-reanimated";
 
 const BottomModal = () => {
   const bottomSheetRef = useRef<BottomSheet>();
@@ -15,22 +14,30 @@ const BottomModal = () => {
       ref={bottomSheetRef}
       index={0}
       snapPoints={snapPoints}
-      handleStyle={styles.handle}
+      style={styles.sheet}
       animatedIndex={animatedIndex}
-     animateOnMount={true}
+      animateOnMount={true}
     >
-      <BottomModalContent animatedIndex={animatedIndex}/>
+      <BottomModalContent animatedIndex={animatedIndex} />
     </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  handle: {
-    backgroundColor: "#525267",
+  sheet: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.36,
+    shadowRadius: 6.68,
+
+    elevation: 11,
+    backgroundColor: "white",
     borderTopStartRadius: 10,
     borderTopEndRadius: 10,
   },
- 
 });
 
 export default BottomModal;

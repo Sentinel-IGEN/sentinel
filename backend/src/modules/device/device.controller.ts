@@ -1,5 +1,6 @@
 import { Controller, Body, Post, HttpException } from '@nestjs/common';
 import { Error } from 'mongoose';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MongoService, MqttService } from '../../services';
 import { CreateDeviceDTO } from 'src/schemas/dtos';
 import { EmbeddedDevice } from 'src/schemas/EmbeddedDevice.schema';
