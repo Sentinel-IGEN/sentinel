@@ -5,9 +5,8 @@ import { WS_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MapView from "./MapView";
 import { sendPostRequest } from "../../helpers/Requests";
-import ClearAsyncStorageButton from "./ClearAsyncStorageButton";
-import LockButton from "./LockButton";
 import { LockLoadingState, LockState } from "../../recoil_state";
+import BottomModal from "../../components/BottomModal";
 
 interface WebSocketMessage {
   topic: string;
@@ -67,7 +66,7 @@ const HomeView = () => {
           // Re-sync with device
           const lockState = lockStatus == "1";
           setLockState(lockState);
-          sendPostRequest("mobile/toggleLock", {
+          sendPostRequest("toggleLock", {
             status: lockState,
             device: "device1",
           });
@@ -82,20 +81,12 @@ const HomeView = () => {
   return (
     <View>
       <MapView style={styles.map} />
-      <View style={styles.buttons}>
-        <LockButton />
-        <ClearAsyncStorageButton />
-      </View>
+      <BottomModal />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  buttons: {
-    position: "absolute",
-    bottom: 20,
-    width: "100%",
-  },
   map: { height: "100%", width: "100%" },
 });
 

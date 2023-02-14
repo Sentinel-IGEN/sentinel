@@ -4,7 +4,9 @@ import {
   Post,
   HttpException,
   HttpCode,
+  Logger,
 } from '@nestjs/common';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { SNSService, MongoService, MqttService } from '../../services';
 import { User } from '../../schemas/User.schema';
 import {
@@ -29,6 +31,7 @@ export class MobileController {
   // Create mobile user
   @Post('')
   async createUser(@Body() user: User): Promise<User | unknown> {
+    Logger.log('Creating user');
     const data = await this.MongoService.createUser(user);
     return data;
   }

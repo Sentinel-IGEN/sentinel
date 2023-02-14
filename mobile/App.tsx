@@ -1,6 +1,7 @@
 import { ThemeProvider, createTheme } from "@rneui/themed";
 
 import React from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { RecoilRoot } from "recoil";
 import NavigationStackView from "./views/NavigationStackView";
 
@@ -24,7 +25,9 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <RecoilRoot>
-        <NavigationStackView />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <NavigationStackView />
+        </GestureHandlerRootView>
       </RecoilRoot>
     </ThemeProvider>
   );

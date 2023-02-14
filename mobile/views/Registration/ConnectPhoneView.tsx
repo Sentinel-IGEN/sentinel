@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, SafeAreaView } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import PhoneInput from "react-native-phone-number-input";
 import AsyncStorage from "@react-native-async-storage/async-storage";
