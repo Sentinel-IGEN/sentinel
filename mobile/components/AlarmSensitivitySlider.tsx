@@ -26,15 +26,15 @@ const AlarmSensitivitySlider = () => {
       minimumValue={0}
       step={1}
       allowTouchTrack
-      trackStyle={{ height: 5, backgroundColor: "transparent" }}
+      trackStyle={{ height: 6, backgroundColor: "transparent" }}
       thumbStyle={{ height: 20, width: 20, backgroundColor: "transparent" }}
       thumbProps={{
         children: (
           <Icon
             type="material-community"
             name="motion-sensor"
-            size={20}
-            containerStyle={{ bottom: 20, right: 20 }}
+            size={14}
+            containerStyle={{ bottom: 14, right: 14 }}
             color="#2E2647"
             reverse
           />

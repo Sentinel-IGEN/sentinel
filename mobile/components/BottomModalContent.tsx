@@ -57,6 +57,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-evenly",
+    marginTop: 12,
   },
   addressContainer: {
     flexDirection: "row",
