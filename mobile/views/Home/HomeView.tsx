@@ -5,7 +5,7 @@ import { WS_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MapView from "./MapView";
 import { sendPostRequest } from "../../helpers/Requests";
-import { LockLoadingState, LockState } from "../../recoil_state";
+import { LockLoadingState, LockState, DeviceHeartBeatState, DeviceConnectionState } from "../../recoil_state";
 import BottomModal from "../../components/BottomModal";
 
 interface WebSocketMessage {
@@ -15,14 +15,20 @@ interface WebSocketMessage {
 
 const createTwoButtonAlert = () => {
   Alert.alert("Motion detected", "Your sentinel bike tag may be moving.", [
-    { text: "Ignore", onPress: () => console.log("Ignore Pressed") },
-    { text: "Turn on alarm", onPress: () => console.log("Alarm Pressed") },
+    { text: "OK", onPress: () => console.log("OK") },
+    {
+      text: "Turn off alarm",
+      onPress: async () =>
+        sendPostRequest("toggleAlarm", { status: 0, device: "device1" }),
+    },
   ]);
 };
 
 const HomeView = () => {
   const setLockState = useSetRecoilState(LockState);
   const setLockLoading = useSetRecoilState(LockLoadingState);
+  const setDeviceHeartBeat = useSetRecoilState(DeviceHeartBeatState);
+  const setDeviceConnectionState = useSetRecoilState(DeviceConnectionState);
   const [motionDetectTime, setMotionDetectTime] = React.useState(Date.now());
 
   const ws = React.useRef(new WebSocket(WS_URL));
@@ -44,11 +50,22 @@ const HomeView = () => {
           break;
         case "motion_status":
           if (serializedData.payload == "1") {
-            if (Date.now() - motionDetectTime > 10000) {
+            if (Date.now() - motionDetectTime > 3000) {
               setMotionDetectTime(Date.now());
               createTwoButtonAlert();
             }
           }
+          break;
+        case "device_health":
+          if (serializedData.payload == "1") {
+            setDeviceHeartBeat(Date.now());
+            setDeviceConnectionState(true);
+          }
+          else {
+            setDeviceConnectionState(false);
+            Alert.alert("Device disconnected.");
+          }
+          console.log("Device health");
           break;
         default:
           break;

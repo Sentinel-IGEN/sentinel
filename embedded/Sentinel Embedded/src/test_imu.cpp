@@ -7,7 +7,7 @@
 * Motion detection threshold - Units of 2mg
 * https://www.i2cdevlib.com/docs/html/class_m_p_u6050.html#ab7a825b1b8b86cebda308289630795e7
 */ 
-#define MOTION_DETECTION_THRESHOLD 5
+#define MOTION_DETECTION_THRESHOLD 1
 #define MOTION_EVENT_DURATION 40
 
 Adafruit_MPU6050 mpu;

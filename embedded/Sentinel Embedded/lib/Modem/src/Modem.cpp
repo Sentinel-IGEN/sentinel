@@ -143,7 +143,7 @@ namespace Modem
             // 13, GSM only
             // 38, LTE only
             // 51, GSM and LTE only
-            modem.setNetworkMode(2);
+            modem.setNetworkMode(38);
             delay(5000);
 
             while (!modem.isNetworkConnected())
