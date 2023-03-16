@@ -11,6 +11,7 @@ import React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RegisteredState } from "../recoil_state";
 import { useRecoilState } from "recoil";
+import DeviceNameView from "./Registration/DeviceNameView";
 
 const Stack = createNativeStackNavigator();
 
@@ -70,6 +71,7 @@ export default function NavigationStackView() {
                 name="ConnectDevice"
                 component={ConnectDeviceView}
               />
+              <Stack.Screen name="DeviceName" component={DeviceNameView} />
               <Stack.Screen name="ConnectPhone" component={ConnectPhoneView} />
               <Stack.Screen name="VerifyPhone" component={VerifyPhoneView} />
               {/* End registration views */}

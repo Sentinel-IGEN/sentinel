@@ -9,8 +9,9 @@ import AlarmButton from "./AlarmButton";
 import AlarmSensitivitySlider from "./AlarmSensitivitySlider";
 import LockButton from "../views/Home/LockButton";
 import ClearAsyncStorageButton from "../views/Home/ClearAsyncStorageButton";
-import { Icon } from "@rneui/themed";
 import DeviceConnectionStatusBar from "./DeviceConnectionStatusBar";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Props {
   animatedIndex: SharedValue<number>;
@@ -18,6 +19,7 @@ interface Props {
 
 const BottomModalContent = (props: Props) => {
   const { animatedIndex } = props;
+  const [deviceName, setDeviceName] = useState("Sentinel");
 
   const containerAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -30,9 +32,19 @@ const BottomModalContent = (props: Props) => {
     };
   }, [animatedIndex]);
 
+  useEffect(() => {
+    const getName = async () => {
+      let name = await AsyncStorage.getItem("@deviceName");
+      if (name) {
+        setDeviceName(name);
+      }
+    }
+    getName();
+  }, [])
+
   return (
     <View style={styles.contentContainer}>
-      <Text style={styles.title}>Bob's Bike Tag</Text>
+      <Text style={styles.title}>{deviceName}'s Bike Tag</Text>
       <Text style={styles.address}>576 West 44th Ave, Vancouver V3X 7T3</Text>
       <DeviceConnectionStatusBar />
       <View style={styles.buttonContainer}>

@@ -1,5 +1,6 @@
 import Map, { Circle, Marker } from "react-native-maps";
 import React, { useState } from "react";
+import { Image } from "react-native";
 
 const MapView = (props) => {
   // temp region for demo
@@ -13,6 +14,11 @@ const MapView = (props) => {
   // temp location for demo
   const [bikeLocation, setBikeLocation] = useState({
     latitude: 49.26400057251193,
+    longitude: -123.25015147397013,
+  });
+
+  const [myLocation, setMyLocation] = useState({
+    latitude: 49.2600057251193,
     longitude: -123.25015147397013,
   });
 
@@ -33,6 +39,15 @@ const MapView = (props) => {
         }}
         tappable={false}
         opacity={0.8}
+      >
+        <Image source={require('../../assets/bike.png')} style={{height: 35, width:35, top: -12.5 }}/>
+      </Marker>
+      <Marker
+        coordinate={{
+          latitude: myLocation.latitude - 0.0002,
+          longitude: myLocation.longitude,
+        }}
+        tappable={false}
       />
     </Map>
   );
