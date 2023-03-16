@@ -9,7 +9,9 @@ import AlarmButton from "./AlarmButton";
 import AlarmSensitivitySlider from "./AlarmSensitivitySlider";
 import LockButton from "../views/Home/LockButton";
 import ClearAsyncStorageButton from "../views/Home/ClearAsyncStorageButton";
-import { Icon } from "@rneui/themed";
+import DeviceConnectionStatusBar from "./DeviceConnectionStatusBar";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Props {
   animatedIndex: SharedValue<number>;
@@ -17,6 +19,7 @@ interface Props {
 
 const BottomModalContent = (props: Props) => {
   const { animatedIndex } = props;
+  const [deviceName, setDeviceName] = useState("Sentinel");
 
   const containerAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -29,17 +32,27 @@ const BottomModalContent = (props: Props) => {
     };
   }, [animatedIndex]);
 
+  useEffect(() => {
+    const getName = async () => {
+      let name = await AsyncStorage.getItem("@deviceName");
+      if (name) {
+        setDeviceName(name);
+      }
+    }
+    getName();
+  }, [])
+
   return (
     <View style={styles.contentContainer}>
-      <View style={styles.addressContainer}>
-        <Icon name="gps-fixed" type="material" />
-        <Text style={styles.address}>576 West 44th Ave, Vancouver V3X 7T3</Text>
-      </View>
+      <Text style={styles.title}>{deviceName}'s Bike Tag</Text>
+      <Text style={styles.address}>576 West 44th Ave, Vancouver V3X 7T3</Text>
+      <DeviceConnectionStatusBar />
       <View style={styles.buttonContainer}>
         <LockButton />
         <AlarmButton />
       </View>
       <Animated.View style={[styles.sliderContainer, containerAnimatedStyle]}>
+        <Text style={styles.motionSensitivity}>Motion Sensitivity</Text>
         <AlarmSensitivitySlider />
       </Animated.View>
       <ClearAsyncStorageButton />
@@ -50,6 +63,7 @@ const BottomModalContent = (props: Props) => {
 const styles = StyleSheet.create({
   sliderContainer: {
     padding: 20,
+    paddingTop: 10,
     width: "100%",
     justifyContent: "center",
     alignItems: "stretch",
@@ -57,7 +71,17 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-evenly",
-    marginTop: 12,
+  },
+  title: {
+    padding: 5,
+    marginLeft: 15,
+    fontSize:22,
+    fontWeight: "600",
+  },
+  motionSensitivity: {
+    fontSize:18,
+    fontWeight: "600",
+    paddingBottom: 5,
   },
   addressContainer: {
     flexDirection: "row",
@@ -71,8 +95,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   address: {
-    color: "black",
-    paddingHorizontal: 10,
+    color: "grey",
+    marginLeft: 20,
   },
   contentContainer: {
     flex: 1,

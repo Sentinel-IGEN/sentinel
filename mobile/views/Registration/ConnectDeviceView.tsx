@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, SafeAreaView } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Text, Button } from "@rneui/themed";
 import { CodeField, Cursor } from "react-native-confirmation-code-field";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -39,7 +39,7 @@ const ConnectDeviceView = ({ navigation }) => {
       console.log(err);
     } finally {
       setIsFetching(false);
-      navigation.push("ConnectPhone");
+      navigation.push("DeviceName");
     }
   };
 

@@ -74,25 +74,6 @@ void loop()
   }
   digitalWrite(LED_PIN, HIGH);
 
-  /* START */
-  Modem::enableGPS(modem);
-  float lat, lon;
-    while (1)
-    {
-        if (modem.getGPS(&lat, &lon))
-        {
-            Serial.println("The location has been locked, the latitude and longitude are:");
-            Serial.print("latitude:");
-            Serial.println(lat);
-            Serial.print("longitude:");
-            Serial.println(lon);
-            break;
-        }
-        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-        delay(2000);
-    }
-  /* END */
-
   SerialMon.println();
   SerialMon.println("Device is connected!");
   SerialMon.println("Modem Info: " + modem.getModemInfo());

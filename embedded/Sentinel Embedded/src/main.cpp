@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <atomic>
 #include <Modem.h>
 #include <TinyGsmClient.h>
 #include <PubSubClient.h>
@@ -8,6 +9,7 @@
 #include <Wire.h>
 #include <ctype.h>
 #include <secrets.h>
+#include "protothreads.h"
 
 /*********************************************
  * Constants
@@ -26,8 +28,12 @@
 #define MOTION_EVENT_DURATION 40
 
 // Ping Intervals
-#define MOTION_DETECTION_INTERVAL_MS 3 * S_TO_MS
+#define MOTION_DETECTION_INTERVAL_MS 5 * S_TO_MS
 #define HEALTH_INTERVAL_MS 10 * S_TO_MS
+
+// Alarm
+#define ALARM_PIN 33
+#define ALARM_RESET_INTERVAL_MS 6 * S_TO_MS
 
 /*********************************************
  * MQTT
@@ -39,7 +45,8 @@ const char *broker = "fb14f44e5bae4ffbb829c97b6cdc10eb.s2.eu.hivemq.cloud";
 // Subscribe Topics
 String topicLockRequest = String("lock/") + DEVICE_NAME;
 String topicMotionThresholdRequest = String("motion_threshold/") + DEVICE_NAME;
-String subscribeTopics[] = {topicLockRequest, topicMotionThresholdRequest};
+String topicAlarmRequest = String("alarm/") + DEVICE_NAME;
+String subscribeTopics[] = {topicLockRequest, topicMotionThresholdRequest, topicAlarmRequest};
 
 // Publish Topics
 String topicMotionStatus = String("motion_status/") + DEVICE_NAME;
@@ -53,23 +60,62 @@ String topicDeviceHealth = String("device_health/") + DEVICE_NAME;
 TinyGsm modem(SerialAT);
 TinyGsmClientSecure client(modem);
 PubSubClient mqtt(client);
-char mqttClientID[10];
+char mqttClientID[15];
 int numReconnect = 0;
 
 /*********************************************
  * Motion detection variables
  **********************************************/
 Adafruit_MPU6050 mpu;
-bool motionDetected = false;
+volatile bool motionDetected = false;
 int motionDetectionThreshold = 3;
 
 /*********************************************
  * Application variables
  **********************************************/
+unsigned long currentTime; // store current time on each loop
 bool lockStatus = false;
 uint32_t lastHealthPing = 0;
 uint32_t lastMotionPing = 0;
 DynamicJsonDocument doc(1024);
+
+/*********************************************
+ * Alarm timing
+ **********************************************/
+uint32_t lastAlarmTrigger = 0;
+volatile bool alarmStatus = false;
+unsigned long alarmSleepTimeMS = 100;
+
+/*********************************************
+ * Alarm thread
+ **********************************************/
+pt ptAlarm;
+int alarmThread(struct pt *pt)
+{
+    PT_BEGIN(pt);
+
+    for (;;)
+    {
+        if (millis() - lastAlarmTrigger > ALARM_RESET_INTERVAL_MS)
+            alarmStatus = false;
+
+        if (alarmStatus)
+        {
+            digitalWrite(ALARM_PIN, HIGH);
+            PT_SLEEP(pt, alarmSleepTimeMS);
+            digitalWrite(ALARM_PIN, LOW);
+            PT_SLEEP(pt, alarmSleepTimeMS);
+            alarmSleepTimeMS = (unsigned long)(alarmSleepTimeMS * 0.96);
+        }
+        else
+        {
+            digitalWrite(ALARM_PIN, LOW);
+            PT_YIELD(pt);
+        }
+    }
+
+    PT_END(pt);
+}
 
 /**
  * Callback for motion detection interrupt
@@ -84,8 +130,9 @@ void handleMotionDetection()
  */
 static void generateUniqueID()
 {
-    for (int i = 0; i < 9; ++i)
-        mqttClientID[i] = 'a' + rand() % 26;
+    randomSeed(millis());
+    for (int i = 0; i < 14; ++i)
+        mqttClientID[i] = 'a' + random(300) % 26;
 }
 
 static void mqttCallback(char *topic, byte *payload, unsigned int len)
@@ -93,20 +140,22 @@ static void mqttCallback(char *topic, byte *payload, unsigned int len)
     String data = String((char *)payload, len);
     SerialMon.println("Message arrived [" + String(topic) + "]: " + data);
     deserializeJson(doc, data);
+    String topicString = String(topic);
 
-    if (String(topic) == topicLockRequest)
+    if (topicString == topicLockRequest)
     {
-        if (doc["command"] == 1)
+        bool command = doc["command"];
+        if (command)
             lockStatus = true;
-        else if (doc["command"] == 0)
-            lockStatus = false;
         else
-            return;
+        {
+            lockStatus = false;
+            alarmStatus = false;
+        }
         mpu.setMotionInterrupt(lockStatus);
         mqtt.publish(topicLockStatus.c_str(), lockStatus ? "1" : "0");
     }
-
-    if (String(topic) == topicMotionThresholdRequest)
+    else if (topicString == topicMotionThresholdRequest)
     {
         int newMotionDetectionThreshold = doc["command"];
         if (newMotionDetectionThreshold > 10 || newMotionDetectionThreshold < 0)
@@ -117,20 +166,33 @@ static void mqttCallback(char *topic, byte *payload, unsigned int len)
         String response = String(motionDetectionThreshold);
         mqtt.publish(topicMotionThresholdStatus.c_str(), response.c_str());
     }
+    else if (topicString == topicAlarmRequest)
+    {
+        bool command = doc["command"];
+        if (command)
+        {
+            lastAlarmTrigger = millis();
+            alarmSleepTimeMS = 100;
+            alarmStatus = true;
+            return;
+        }
+        alarmStatus = false;
+    }
 }
 
 /**
  * Connects to MQTT broker and intantiates network connection
  */
-static bool mqttConnect()
+bool mqttConnect()
 {
     generateUniqueID();
     mqtt.disconnect();
-    Modem::initialize(modem, numReconnect++);
-    delay(1000);
+    Modem::initialize(modem, true);
+    delay(2000);
 
-    SerialMon.println("Connecting to " + String(MQTT_BROKER) + " with client ID: " + mqttClientID);
+    SerialMon.println("Connecting to " + String(MQTT_BROKER) + " with client ID: " + mqttClientID + " and user " + MQTT_USER);
     bool mqttConnected = mqtt.connect(mqttClientID, MQTT_USER, MQTT_PASSWORD, "device_health/device1", 2, false, "0", true);
+
 
     if (mqttConnected == false)
     {
@@ -139,7 +201,7 @@ static bool mqttConnect()
     }
 
     SerialMon.println("MQTT connection success!");
-    for (String topic : subscribeTopics)
+    for (String &topic : subscribeTopics)
     {
         mqtt.subscribe(topic.c_str(), 1);
     }
@@ -160,13 +222,17 @@ void setup()
             delay(10);
     }
 
+    // Setup alarm settings
+    PT_INIT(&ptAlarm);
+    pinMode(ALARM_PIN, OUTPUT);
+
     // Setup motion detection
     mpu.setMotionInterrupt(false);
     mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
     mpu.setMotionDetectionThreshold(motionDetectionThreshold);
     mpu.setMotionDetectionDuration(MOTION_EVENT_DURATION);
     mpu.setInterruptPinLatch(false); // Keep it latched.  Will turn off when reinitialized.
-    mpu.setInterruptPinPolarity(true);
+    mpu.setInterruptPinPolarity(false);
 
     // Disable unnecessary functions on IMU
     mpu.setGyroStandby(true, true, true);
@@ -179,7 +245,7 @@ void setup()
     // MQTT setup
     mqtt.setServer(broker, 8883);
     mqtt.setCallback(mqttCallback);
-    mqtt.setKeepAlive(60);
+    mqtt.setKeepAlive(30);
 }
 
 void loop()
@@ -194,23 +260,37 @@ void loop()
         SerialMon.println("State: " + String(mqtt.state()));
     }
 
-    if (millis() - lastHealthPing > HEALTH_INTERVAL_MS)
+    currentTime = millis();
+
+    if (currentTime - lastHealthPing > HEALTH_INTERVAL_MS)
     {
         mqtt.publish(topicDeviceHealth.c_str(), "1");
-        lastHealthPing = millis();
+        lastHealthPing = currentTime;
     }
 
-    if (lockStatus && motionDetected && ((millis() - lastMotionPing) > MOTION_DETECTION_INTERVAL_MS))
+    if (lockStatus && motionDetected && ((currentTime - lastMotionPing) > MOTION_DETECTION_INTERVAL_MS))
     {
         motionDetected = false;
-        lastMotionPing = millis();
-        SerialMon.println("Motion detected");
+        lastMotionPing = currentTime;
+
+        alarmStatus = true;
+        lastAlarmTrigger = currentTime;
+        alarmSleepTimeMS = 100;
+
         mqtt.publish(topicMotionStatus.c_str(), "1");
     }
+    else
+    {
+        motionDetected = false;
+    }
 
+    PT_SCHEDULE(alarmThread(&ptAlarm));
     mqtt.loop();
 
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, LOW);
-    esp_sleep_enable_timer_wakeup(1 * S_TO_US);
-    esp_light_sleep_start();
+    // if (!alarmStatus)
+    // {
+    //     esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, LOW);
+    //     esp_sleep_enable_timer_wakeup(0.5 * S_TO_US);
+    //     esp_light_sleep_start();
+    // }
 }

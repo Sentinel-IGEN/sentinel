@@ -6,7 +6,7 @@ import { useSharedValue } from "react-native-reanimated";
 
 const BottomModal = () => {
   const bottomSheetRef = useRef<BottomSheet>();
-  const snapPoints = useMemo(() => ["25%", "50%", "92%"], []);
+  const snapPoints = useMemo(() => ["26%", "50%", "92%"], []);
   const animatedIndex = useSharedValue(0);
 
   return (
@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6.68,
 
     elevation: 11,
-    backgroundColor: "white",
     borderTopStartRadius: 10,
     borderTopEndRadius: 10,
   },
