@@ -1,47 +1,64 @@
-import React from "react";
+import { useEffect } from "react";
 import { DeviceHeartBeatState, DeviceConnectionState } from "../recoil_state";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { StyleSheet, Text, View } from "react-native";
-
+import { Alert, StyleSheet, Text, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const DeviceConnectionStatusBar = () => {
-    const deviceHeartBeat = useRecoilValue(DeviceHeartBeatState);
-    const [connected, setConnected] = useRecoilState(DeviceConnectionState);
+  const [deviceHeartBeat, setDeviceHeartBeat] =
+    useRecoilState(DeviceHeartBeatState);
+  const [connected, setConnected] = useRecoilState(DeviceConnectionState);
 
-    React.useEffect(() => {
-        const interval = setInterval(() => {
-            setConnected(deviceHeartBeat + 15_000 > Date.now());
-        }, 10_000);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newConnectionStatus = deviceHeartBeat + 15_000 > Date.now();
+      if (connected && !newConnectionStatus) {
+        Alert.alert("Your Sentinel bike tag has disconnected!");
+      }
+      setConnected(newConnectionStatus);
+    }, 10_000);
 
-        return () => clearInterval(interval);
-    }, [deviceHeartBeat])
+    return () => clearInterval(interval);
+  }, [deviceHeartBeat]);
 
-    const ConnectedStatusBar = () => (<>
-        <Text style={styles.connectedText}>Connected</Text>
-    </>)
+  useEffect(() => {
+    (async () => {
+      const lastConnected = await AsyncStorage.getItem("@lastHeartBeatTime");
+      if (lastConnected) setDeviceHeartBeat(Number(lastConnected));
+    })();
+  }, []);
 
-    const DisconnectedStatusBar = () => {
-        const lastHeartBeatTime = new Date(deviceHeartBeat);
+  const ConnectedStatusBar = () => (
+    <>
+      <Text style={styles.connectedText}>Connected</Text>
+    </>
+  );
 
-        return <Text style={styles.disconnectedText}>Last connected: {lastHeartBeatTime.toLocaleDateString()} {lastHeartBeatTime.toLocaleTimeString()}</Text>
-   
-    }
+  const DisconnectedStatusBar = () => {
+    const lastHeartBeatTime = new Date(deviceHeartBeat);
 
-    return connected ? <ConnectedStatusBar /> : <DisconnectedStatusBar />;
+    return (
+      <Text style={styles.disconnectedText}>
+        Last connected: {lastHeartBeatTime.toLocaleDateString()}{" "}
+        {lastHeartBeatTime.toLocaleTimeString()}
+      </Text>
+    );
+  };
 
-}
+  return connected ? <ConnectedStatusBar /> : <DisconnectedStatusBar />;
+};
 
 const styles = StyleSheet.create({
-    connectedText: {
-        color: "green",
-        marginLeft: 20,
-        paddingTop: 2,
-    },
-    disconnectedText: {
-        color: "gray",
-        marginLeft: 20,
-        paddingTop: 2,
-    },
-  });
+  connectedText: {
+    color: "green",
+    marginLeft: 20,
+    paddingTop: 2,
+  },
+  disconnectedText: {
+    color: "gray",
+    marginLeft: 20,
+    paddingTop: 2,
+  },
+});
 
 export default DeviceConnectionStatusBar;

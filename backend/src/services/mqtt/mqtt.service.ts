@@ -9,7 +9,7 @@ export class MqttService implements OnApplicationBootstrap {
     'device_health/#',
     'lock_status/#',
     'motion_status/#',
-    'GPS/#',
+    'gps/#',
   ];
   publishTopics = ['alarm', 'lock', 'motion_threshold'];
   private readonly webSocketListener: WebSocketListener;

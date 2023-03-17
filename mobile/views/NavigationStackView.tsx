@@ -35,7 +35,7 @@ export default function NavigationStackView() {
   const [isRegistered, setRegistered] = useRecoilState(RegisteredState);
 
   React.useEffect(() => {
-    const loadEmbeddedDeviceID = async () => {
+    (async () => {
       try {
         const userId = await AsyncStorage.getItem("@userId");
         if (userId) {
@@ -47,8 +47,7 @@ export default function NavigationStackView() {
       } catch (e) {
         console.error(e);
       }
-    };
-    loadEmbeddedDeviceID();
+    })();
   }, []);
 
   return (

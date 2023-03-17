@@ -35,6 +35,11 @@ const DeviceConnectionState = atom({
   default: false,
 });
 
+const bikeGPSState = atom({
+  key: "tagGPSState",
+  default: { latitude: 49.26400057251193, longitude: -123.25015147397013 },
+});
+
 export {
   RegisteredState,
   LockState,
@@ -43,4 +48,5 @@ export {
   AlarmLoadingState,
   DeviceHeartBeatState,
   DeviceConnectionState,
+  bikeGPSState,
 };

@@ -6,7 +6,7 @@ import { useSharedValue } from "react-native-reanimated";
 
 const BottomModal = () => {
   const bottomSheetRef = useRef<BottomSheet>();
-  const snapPoints = useMemo(() => ["26%", "50%", "92%"], []);
+  const snapPoints = useMemo(() => ["28%", "55%", "92%"], []);
   const animatedIndex = useSharedValue(0);
 
   return (
