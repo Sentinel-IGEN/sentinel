@@ -33,13 +33,12 @@ const BottomModalContent = (props: Props) => {
   }, [animatedIndex]);
 
   useEffect(() => {
-    const getName = async () => {
+    (async () => {
       let name = await AsyncStorage.getItem("@deviceName");
       if (name) {
         setDeviceName(name);
       }
-    }
-    getName();
+    })()
   }, [])
 
   return (

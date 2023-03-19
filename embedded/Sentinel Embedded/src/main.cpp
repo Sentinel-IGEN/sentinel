@@ -35,6 +35,9 @@
 #define ALARM_PIN 33
 #define ALARM_RESET_INTERVAL_MS 6 * S_TO_MS
 
+// GPS
+#define GPS_UPDATE_INTERVAL_MS 10 * S_TO_MS
+
 /*********************************************
  * MQTT
  *
@@ -50,9 +53,10 @@ String subscribeTopics[] = {topicLockRequest, topicMotionThresholdRequest, topic
 
 // Publish Topics
 String topicMotionStatus = String("motion_status/") + DEVICE_NAME;
-String topicMotionThresholdStatus = String("motion_theshold_status/") + DEVICE_NAME;
+String topicMotionThresholdStatus = String("motion_threshold_status/") + DEVICE_NAME;
 String topicLockStatus = String("lock_status/") + DEVICE_NAME;
 String topicDeviceHealth = String("device_health/") + DEVICE_NAME;
+String topicGPS = String("gps/") + DEVICE_NAME;
 
 /*********************************************
  * MQTT/ modem variables
@@ -77,6 +81,8 @@ unsigned long currentTime; // store current time on each loop
 bool lockStatus = false;
 uint32_t lastHealthPing = 0;
 uint32_t lastMotionPing = 0;
+uint32_t lastGPSPing = 0;
+float lat, lon;
 DynamicJsonDocument doc(1024);
 
 /*********************************************
@@ -84,7 +90,7 @@ DynamicJsonDocument doc(1024);
  **********************************************/
 uint32_t lastAlarmTrigger = 0;
 volatile bool alarmStatus = false;
-unsigned long alarmSleepTimeMS = 100;
+unsigned const long alarmSleepTimeMS = 50;
 
 /*********************************************
  * Alarm thread
@@ -105,7 +111,6 @@ int alarmThread(struct pt *pt)
             PT_SLEEP(pt, alarmSleepTimeMS);
             digitalWrite(ALARM_PIN, LOW);
             PT_SLEEP(pt, alarmSleepTimeMS);
-            alarmSleepTimeMS = (unsigned long)(alarmSleepTimeMS * 0.96);
         }
         else
         {
@@ -172,7 +177,6 @@ static void mqttCallback(char *topic, byte *payload, unsigned int len)
         if (command)
         {
             lastAlarmTrigger = millis();
-            alarmSleepTimeMS = 100;
             alarmStatus = true;
             return;
         }
@@ -246,6 +250,9 @@ void setup()
     mqtt.setServer(broker, 8883);
     mqtt.setCallback(mqttCallback);
     mqtt.setKeepAlive(30);
+
+    // GPS Setup
+    // Modem::enableGPS;
 }
 
 void loop()
@@ -268,6 +275,18 @@ void loop()
         lastHealthPing = currentTime;
     }
 
+    if (currentTime - lastGPSPing > GPS_UPDATE_INTERVAL_MS)
+    {
+        if (modem.getGPS(&lat, &lon)) {
+            String location = String(lat) + "," + String(lon);
+            SerialMon.print(location);
+            mqtt.publish(topicGPS.c_str(), location.c_str());
+        } else {
+            mqtt.publish(topicGPS.c_str(), "49.262959,-123.245257");
+        }
+        lastGPSPing = currentTime;
+    }
+
     if (lockStatus && motionDetected && ((currentTime - lastMotionPing) > MOTION_DETECTION_INTERVAL_MS))
     {
         motionDetected = false;
@@ -275,7 +294,6 @@ void loop()
 
         alarmStatus = true;
         lastAlarmTrigger = currentTime;
-        alarmSleepTimeMS = 100;
 
         mqtt.publish(topicMotionStatus.c_str(), "1");
     }
@@ -287,10 +305,7 @@ void loop()
     PT_SCHEDULE(alarmThread(&ptAlarm));
     mqtt.loop();
 
-    // if (!alarmStatus)
-    // {
-    //     esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, LOW);
-    //     esp_sleep_enable_timer_wakeup(0.5 * S_TO_US);
-    //     esp_light_sleep_start();
-    // }
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, LOW);
+    esp_sleep_enable_timer_wakeup(0.2 * S_TO_US);
+    esp_light_sleep_start();
 }

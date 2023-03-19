@@ -1,11 +1,17 @@
-import React from "react";
+import { useState, useRef, useEffect } from "react";
 import { View, Alert, StyleSheet } from "react-native";
 import { useSetRecoilState } from "recoil";
 import { WS_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MapView from "./MapView";
 import { sendPostRequest } from "../../helpers/Requests";
-import { LockLoadingState, LockState, DeviceHeartBeatState, DeviceConnectionState } from "../../recoil_state";
+import {
+  LockLoadingState,
+  LockState,
+  DeviceHeartBeatState,
+  DeviceConnectionState,
+  bikeGPSState,
+} from "../../recoil_state";
 import BottomModal from "../../components/BottomModal";
 
 interface WebSocketMessage {
@@ -29,16 +35,17 @@ const HomeView = () => {
   const setLockLoading = useSetRecoilState(LockLoadingState);
   const setDeviceHeartBeat = useSetRecoilState(DeviceHeartBeatState);
   const setDeviceConnectionState = useSetRecoilState(DeviceConnectionState);
-  const [motionDetectTime, setMotionDetectTime] = React.useState(Date.now());
+  const setBikeGPSState = useSetRecoilState(bikeGPSState);
+  const [motionDetectTime, setMotionDetectTime] = useState(Date.now());
 
-  const ws = React.useRef(new WebSocket(WS_URL));
+  const ws = useRef(new WebSocket(WS_URL)).current;
 
-  ws.current.onopen = () => {
+  ws.onopen = () => {
     const data = { command: "register", device: "device1" };
-    ws.current.send(JSON.stringify(data));
+    ws.send(JSON.stringify(data));
   };
 
-  ws.current.onmessage = (data) => {
+  ws.onmessage = (data) => {
     console.log(data.data);
     try {
       const serializedData: WebSocketMessage = JSON.parse(data.data);
@@ -58,14 +65,18 @@ const HomeView = () => {
           break;
         case "device_health":
           if (serializedData.payload == "1") {
-            setDeviceHeartBeat(Date.now());
+            const currentTime = Date.now();
+            AsyncStorage.setItem("@lastHeartBeatTime", currentTime.toString());
+            console.log(currentTime, currentTime.toString());
+            setDeviceHeartBeat(currentTime);
             setDeviceConnectionState(true);
           }
-          else {
-            setDeviceConnectionState(false);
-            Alert.alert("Device disconnected.");
-          }
-          console.log("Device health");
+          break;
+        case "gps":
+          if (!serializedData.payload) break;
+          const location = serializedData.payload.split(",");
+          let [lat, lon] = [location[0], location[1]];
+          setBikeGPSState({ latitude: Number(lat), longitude: Number(lon) });
           break;
         default:
           break;
@@ -75,8 +86,8 @@ const HomeView = () => {
     }
   };
 
-  React.useEffect(() => {
-    const loadAsyncStorage = async () => {
+  useEffect(() => {
+    (async () => {
       try {
         const lockStatus = await AsyncStorage.getItem("@lockStatus");
         if (lockStatus) {
@@ -91,8 +102,7 @@ const HomeView = () => {
       } catch (e) {
         console.warn(e);
       }
-    };
-    loadAsyncStorage();
+    })();
   }, []);
 
   return (
