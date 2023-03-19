@@ -5,6 +5,8 @@ import {
   HttpException,
   HttpCode,
   Logger,
+  Get,
+  Param,
 } from '@nestjs/common';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { SNSService, MongoService, MqttService } from '../../services';
@@ -186,6 +188,13 @@ export class MobileController {
       JSON.stringify(message),
     );
     return result ? 'success' : 'failure';
+  }
+
+  @Get('/logs/:deviceId')
+  async getGPSLogs(@Param('deviceId') deviceId) {
+    const embeddedDevice = await this.MongoService.getEmbeddedDevice(deviceId);
+    
+    return embeddedDevice?.gpsLog
   }
 
   /* FOR TESTING */

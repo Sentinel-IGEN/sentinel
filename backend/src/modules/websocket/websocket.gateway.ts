@@ -75,7 +75,7 @@ export class WebSocketListener implements OnGatewayInit {
     }
 
     // Handle GPS caching
-    if(topic === "GPS") {
+    if(topic === "gps") {
       this.MongoService.appendGPSLog(device, payload)
     }
   }
