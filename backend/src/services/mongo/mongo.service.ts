@@ -187,7 +187,7 @@ export class MongoService implements OnApplicationBootstrap {
           ...(Array.isArray(embeddedDevice.gpsLog)
             ? embeddedDevice.gpsLog
             : []),
-          location,
+          { location, time: Date.now() },
         ],
       });
 
