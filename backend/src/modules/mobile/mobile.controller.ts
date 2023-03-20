@@ -5,6 +5,8 @@ import {
   HttpException,
   HttpCode,
   Logger,
+  Get,
+  Param,
 } from '@nestjs/common';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { SNSService, MongoService, MqttService } from '../../services';
@@ -65,31 +67,31 @@ export class MobileController {
       // If endpoint ARN is not stored, create platform endpoint for user and store it
       let newEndpointARN: string | undefined;
       if (user.endpointARN === undefined) {
-        console.log('ENDPOINT ARN was not previously stored for the user');
+        Logger.debug('ENDPOINT ARN was not previously stored for the user');
 
         newEndpointARN = await this.SNSService.createEndpoint(
           platformApplicationARN,
           data.deviceToken,
         );
-        console.log('created platform endpoint using AWS SNS');
+        Logger.debug('created platform endpoint using AWS SNS');
 
         await this.MongoService.updateUser(data.userId, {
           endpointARN: newEndpointARN,
         });
-        console.log('updated user in mongoDB with new endpoint arn');
+        Logger.debug('updated user in mongoDB with new endpoint arn');
       }
 
       try {
         const attributes = await this.SNSService.getPlatformEndpointAttributes(
           user.endpointARN || newEndpointARN,
         );
-        console.log(`got endpoint attributes: ${attributes}`);
+        Logger.debug(`got endpoint attributes: ${attributes}`);
 
         if (
           attributes?.Token !== data.deviceToken ||
           attributes?.Enabled === 'false'
         ) {
-          console.log(
+          Logger.debug(
             "either stored token doesn't match supplied token, or endpoint is disabled",
           );
           // set endpoint attributes here
@@ -100,25 +102,25 @@ export class MobileController {
               Enabled: 'true',
             },
           );
-          console.log(
+          Logger.debug(
             `set platform attributes with new token and Enabled: true, here is the return: ${metaData}`,
           );
         }
       } catch (err) {
-        console.log(`caught err when getting endpoint attributes: ${err}`);
+        Logger.debug(`caught err when getting endpoint attributes: ${err}`);
         if (err instanceof NotFoundException) {
           newEndpointARN = await this.SNSService.createEndpoint(
             platformApplicationARN,
             data.deviceToken,
           );
-          console.log(
+          Logger.debug(
             `caught non found error, meaning endpoint was deleted. created new endpoint with ARN: ${newEndpointARN}`,
           );
 
           await this.MongoService.updateUser(data.userId, {
             endpointARN: newEndpointARN,
           });
-          console.log('updated user in mongoDB with new endpointARN');
+          Logger.debug('updated user in mongoDB with new endpointARN');
         }
       }
     } else {
@@ -186,6 +188,13 @@ export class MobileController {
       JSON.stringify(message),
     );
     return result ? 'success' : 'failure';
+  }
+
+  @Get('/logs/:deviceId')
+  async getGPSLogs(@Param('deviceId') deviceId) {
+    const embeddedDevice = await this.MongoService.getEmbeddedDevice(deviceId);
+    
+    return embeddedDevice?.gpsLog
   }
 
   /* FOR TESTING */

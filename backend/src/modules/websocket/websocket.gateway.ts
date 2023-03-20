@@ -5,6 +5,7 @@ import {
   WebSocketServer as WBServer,
 } from '@nestjs/websockets';
 import WebSocket, { Server } from 'ws';
+import { MongoService } from '../../services';
 
 interface WebSocketRecieveMessage {
   command: string;
@@ -19,6 +20,8 @@ interface WebSocketReplyMessage {
 @Injectable()
 @WebSocketGateway()
 export class WebSocketListener implements OnGatewayInit {
+  constructor(private readonly MongoService: MongoService) {}
+
   @WBServer()
   server: Server;
   connections: Map<string, WebSocket.WebSocket> = new Map(); // Connected ws clients
@@ -69,6 +72,11 @@ export class WebSocketListener implements OnGatewayInit {
     if (this.connections.has(device)) {
       const data: WebSocketReplyMessage = { topic: topic, payload: payload };
       this.connections.get(device)?.send(JSON.stringify(data));
+    }
+
+    // Handle GPS caching
+    if(topic === "gps") {
+      this.MongoService.appendGPSLog(device, payload)
     }
   }
 

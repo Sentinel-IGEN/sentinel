@@ -2,6 +2,7 @@ import {
   Injectable,
   OnApplicationBootstrap,
   HttpException,
+  Logger,
 } from '@nestjs/common';
 import mongoose, { Types } from 'mongoose';
 import { UserMongooseSchema, User } from '../../schemas/User.schema';
@@ -26,7 +27,7 @@ export class MongoService implements OnApplicationBootstrap {
       autoIndex: true,
     });
     mongoose.connection.once('open', () => {
-      console.log('MongoDB connection established');
+      Logger.debug('MongoDB connection established');
     });
   }
 
@@ -55,7 +56,7 @@ export class MongoService implements OnApplicationBootstrap {
   }
 
   async updateEmbeddedDevice(deviceData: UpdateDeviceDTO) {
-    console.log('updateEmbeddedDevice called with payload: ', deviceData);
+    Logger.debug('updateEmbeddedDevice called with payload: ', deviceData);
     const { token, ...device } = deviceData;
     let tokenHash: string | undefined;
 
@@ -156,7 +157,9 @@ export class MongoService implements OnApplicationBootstrap {
 
   // Update user by uuid
   async updateUser(userId: Types.ObjectId, userData: Partial<User>) {
-    console.log(`updateUser for id:${userId} called with payload: ${userData}`);
+    Logger.debug(
+      `updateUser for id:${userId} called with payload: ${userData}`,
+    );
 
     const data: User | null = await this.User.findByIdAndUpdate(
       userId,
@@ -168,5 +171,33 @@ export class MongoService implements OnApplicationBootstrap {
     );
 
     return data;
+  }
+
+  //Add GPS Log to Embedded Device using embedded device uuid
+  async appendGPSLog(uuid: string, location: string) {
+    Logger.log(
+      `appendGPSLog call with location: "${location}" and uuid: "${uuid}"`,
+    );
+    const embeddedDevice = await this.getEmbeddedDevice(uuid);
+
+    if (embeddedDevice) {
+      await this.updateEmbeddedDevice({
+        uuid: uuid,
+        gpsLog: [
+          ...(Array.isArray(embeddedDevice.gpsLog)
+            ? embeddedDevice.gpsLog
+            : []),
+          { location, time: Date.now() },
+        ],
+      });
+
+      Logger.log(
+        `SUCCESS: Location: "${location} added to embedded device: "${uuid}"`,
+      );
+    } else {
+      Logger.error(
+        'In appendGPSLog: embedded device not found using provided uuid.',
+      );
+    }
   }
 }
