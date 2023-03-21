@@ -32,6 +32,9 @@ const ConnectDeviceView = ({ navigation }) => {
         if (content._id) {
           AsyncStorage.setItem("@userId", content._id);
         }
+        if (content.embeddedDeviceId) {
+          AsyncStorage.setItem("@embeddedDeviceId", content.embeddedDeviceId);
+        }
       } catch (e) {
         console.log("error saving user connection info");
       }

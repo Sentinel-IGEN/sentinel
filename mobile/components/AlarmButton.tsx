@@ -27,7 +27,7 @@ export default function AlarmButton() {
   }, [alarmStatus]);
 
   const toggleAlarm = async () => {
-    sendPostRequest("toggleAlarm", { status: !alarmStatus, device: "device1" });
+    sendPostRequest("toggleAlarm", { status: !alarmStatus, device: "device1" }); //TODO: Change to actual device id
     setAlarm((status) => !status);
     setTimeout(() => setAlarm(false), 7000);
   };

@@ -41,7 +41,7 @@ const HomeView = () => {
   const ws = useRef(new WebSocket(WS_URL)).current;
 
   ws.onopen = () => {
-    const data = { command: "register", device: "device1" };
+    const data = { command: "register", device: "device1" }; //TODO: change to actual device
     ws.send(JSON.stringify(data));
   };
 
