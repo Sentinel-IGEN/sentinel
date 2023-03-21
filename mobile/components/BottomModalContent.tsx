@@ -12,6 +12,8 @@ import ClearAsyncStorageButton from "../views/Home/ClearAsyncStorageButton";
 import DeviceConnectionStatusBar from "./DeviceConnectionStatusBar";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Button } from "@rneui/themed";
+import { useNavigation } from "@react-navigation/native";
 
 interface Props {
   animatedIndex: SharedValue<number>;
@@ -20,6 +22,8 @@ interface Props {
 const BottomModalContent = (props: Props) => {
   const { animatedIndex } = props;
   const [deviceName, setDeviceName] = useState("Sentinel");
+
+  const navigation = useNavigation();
 
   const containerAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -38,8 +42,8 @@ const BottomModalContent = (props: Props) => {
       if (name) {
         setDeviceName(name);
       }
-    })()
-  }, [])
+    })();
+  }, []);
 
   return (
     <View style={styles.contentContainer}>
@@ -54,6 +58,12 @@ const BottomModalContent = (props: Props) => {
         <Text style={styles.motionSensitivity}>Motion Sensitivity</Text>
         <AlarmSensitivitySlider />
       </Animated.View>
+      <Button
+        title="View Bike's Location History"
+        containerStyle={styles.openBikeLocationHistoryButton}
+        onPress={() => navigation.navigate("LocationHistory" as never)}
+        {...props}
+      />
       <ClearAsyncStorageButton />
     </View>
   );
@@ -74,11 +84,11 @@ const styles = StyleSheet.create({
   title: {
     padding: 5,
     marginLeft: 15,
-    fontSize:22,
+    fontSize: 22,
     fontWeight: "600",
   },
   motionSensitivity: {
-    fontSize:18,
+    fontSize: 18,
     fontWeight: "600",
     paddingBottom: 5,
   },
@@ -100,6 +110,13 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: "white",
+  },
+  openBikeLocationHistoryButton: {
+    alignSelf: "stretch",
+    marginLeft: 24,
+    marginRight: 24,
+    marginTop: 12,
+    borderRadius: 6,
   },
 });
 

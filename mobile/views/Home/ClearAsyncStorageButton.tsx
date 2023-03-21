@@ -6,9 +6,10 @@ import React from "react";
 const styles = StyleSheet.create({
   button: {
     alignSelf: "stretch",
-    marginLeft: 12,
-    marginRight: 12,
-    marginTop: 12,
+    marginLeft: 24,
+    marginRight: 24,
+    marginTop: "auto",
+    marginBottom: 48,
     borderRadius: 6,
   },
 });
@@ -28,6 +29,9 @@ export default function ClearAsyncStorageButton(props) {
       containerStyle={styles.button}
       loading={isLoading}
       onPress={clearAsyncStorage}
+      buttonStyle={{
+        backgroundColor: "#A0A0A0"
+      }}
       {...props}
     />
   );
