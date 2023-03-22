@@ -40,13 +40,16 @@ export default function NavigationStackView() {
     (async () => {
       try {
         const userId = await AsyncStorage.getItem("@userId");
-        const embeddedDeviceId = await AsyncStorage.getItem("@embeddedDeviceId");
+        const embeddedDeviceId = await AsyncStorage.getItem(
+          "@embeddedDeviceId"
+        );
         if (userId && embeddedDeviceId) {
           console.log(
             "Found user ID in storage (user is registered): " + userId
           );
           console.log(
-            "Found embeddedDeviceId in storage (user is registered): " + embeddedDeviceId
+            "Found embeddedDeviceId in storage (user is registered): " +
+              embeddedDeviceId
           );
           setRegistered(true);
         }
@@ -92,7 +95,10 @@ export default function NavigationStackView() {
           <Stack.Screen
             name="LocationHistory"
             component={LocationHistory}
-            options={{ title: "Bike Location History" }}
+            options={{
+              title: "Bike Location History",
+              headerShadowVisible: true,
+            }}
           />
         </Stack.Navigator>
       </NavigationContainer>
