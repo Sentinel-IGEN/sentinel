@@ -35,6 +35,7 @@
     "bcrypt": "^5.1.0",
     "mongoose": "^6.6.5",
     "mqtt": "^4.3.7",
+    "nestjs-fetch": "^0.0.4",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "ws": "^8.12.0"
