@@ -84,7 +84,7 @@ const LocationHistory = () => {
         {filteredLocations.length > 0 && (
           <>
             <Marker
-              coordinate={filteredLocations[filteredLocations.length - 1]}
+              coordinate={filteredLocations[0]}
               tappable={false}
             >
               <Image
