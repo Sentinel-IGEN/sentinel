@@ -2,6 +2,7 @@ import React from "react";
 import { Button, Icon } from "@rneui/themed";
 import { StyleSheet } from "react-native";
 import { sendPostRequest } from "../helpers/Requests";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function AlarmButton() {
   const [alarmStatus, setAlarm] = React.useState(false);
@@ -27,7 +28,8 @@ export default function AlarmButton() {
   }, [alarmStatus]);
 
   const toggleAlarm = async () => {
-    sendPostRequest("toggleAlarm", { status: !alarmStatus, device: "device1" }); //TODO: Change to actual device id
+    const embeddedDeviceId = await AsyncStorage.getItem("@embeddedDeviceId");
+    sendPostRequest("toggleAlarm", { status: !alarmStatus, device: embeddedDeviceId }); //TODO: Change to actual device id
     setAlarm((status) => !status);
     setTimeout(() => setAlarm(false), 7000);
   };
@@ -37,7 +39,7 @@ export default function AlarmButton() {
       containerStyle={styles.buttonContainer}
       buttonStyle={styles.button}
       titleStyle={styles.buttonTitle}
-      color="#091156"
+      color="#151d6e"
       loading={false}
       title={alarmStatus ? "Stop alarm" : "Ring alarm"}
       radius="md"
