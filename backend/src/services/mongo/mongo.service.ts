@@ -174,9 +174,9 @@ export class MongoService implements OnApplicationBootstrap {
   }
 
   //Add GPS Log to Embedded Device using embedded device uuid
-  async appendGPSLog(uuid: string, location: string) {
+  async appendGPSLog(uuid: string, latitude: number, longitude: number, address: string) {
     Logger.log(
-      `appendGPSLog call with location: "${location}" and uuid: "${uuid}"`,
+      `appendGPSLog call with location: "${latitude}, ${longitude}" and uuid: "${uuid}"`,
     );
     const embeddedDevice = await this.getEmbeddedDevice(uuid);
 
@@ -187,12 +187,12 @@ export class MongoService implements OnApplicationBootstrap {
           ...(Array.isArray(embeddedDevice.gpsLog)
             ? embeddedDevice.gpsLog
             : []),
-          { location, time: Date.now() },
+          { latitude, longitude, address, time: Date.now() },
         ],
       });
 
       Logger.log(
-        `SUCCESS: Location: "${location} added to embedded device: "${uuid}"`,
+        `SUCCESS: Location: "(${latitude}, ${longitude}) added to embedded device: "${uuid}"`,
       );
     } else {
       Logger.error(

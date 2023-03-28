@@ -4,6 +4,7 @@ import {
   WebSocketGateway,
   WebSocketServer as WBServer,
 } from '@nestjs/websockets';
+import { FetchService } from 'nestjs-fetch';
 import WebSocket, { Server } from 'ws';
 import { MongoService } from '../../services';
 
@@ -17,10 +18,32 @@ interface WebSocketReplyMessage {
   payload: string;
 }
 
+interface WebSocketReplyGPSMessage {
+  topic: string;
+  payload: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+}
+
+interface GeocodeResponse {
+  display_name: string;
+  address: {
+    building: string;
+    house_number: string;
+    road: string;
+    postcode: string;
+  };
+}
+
 @Injectable()
 @WebSocketGateway()
 export class WebSocketListener implements OnGatewayInit {
-  constructor(private readonly MongoService: MongoService) {}
+  constructor(
+    private readonly MongoService: MongoService,
+    private readonly fetch: FetchService,
+  ) {}
 
   @WBServer()
   server: Server;
@@ -68,15 +91,47 @@ export class WebSocketListener implements OnGatewayInit {
     });
   }
 
-  sendMessage(device: string, topic: string, payload: string) {
-    if (this.connections.has(device)) {
-      const data: WebSocketReplyMessage = { topic: topic, payload: payload };
-      this.connections.get(device)?.send(JSON.stringify(data));
-    }
-
+  async sendMessage(device: string, topic: string, payload: string) {
     // Handle GPS caching
-    if(topic === "gps") {
-      this.MongoService.appendGPSLog(device, payload)
+    if (topic === 'gps') {
+      const location = payload.split(',');
+      const [latitude, longitude] = [
+        Number(Number(location[0]).toFixed(4)),
+        Number(Number(location[1]).toFixed(4)),
+      ];
+
+      if (!(latitude && longitude)) {
+        Logger.error('latitude and longitude not provided');
+        return;
+      }
+
+      const res = await this.fetch.get(
+        `https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}`,
+      );
+
+      const geoData: GeocodeResponse = await res.json();
+      const address = `${geoData.address.house_number || ""} ${geoData.address.road || ""}, ${geoData.address.postcode || ""}`.trim();
+
+      this.MongoService.appendGPSLog(device, latitude, longitude, address);
+
+      // propogate gps message to mobile if device connected
+      if (this.connections.has(device)) {
+        const data: WebSocketReplyGPSMessage = {
+          topic: topic,
+          payload: {
+            latitude,
+            longitude,
+            address,
+          },
+        };
+        this.connections.get(device)?.send(JSON.stringify(data));
+      }
+    } else {
+      // else, propogate message to mobile if device connected
+      if (this.connections.has(device)) {
+        const data: WebSocketReplyMessage = { topic: topic, payload: payload };
+        this.connections.get(device)?.send(JSON.stringify(data));
+      }
     }
   }
 

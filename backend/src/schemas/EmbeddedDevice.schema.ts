@@ -1,12 +1,16 @@
 import { Schema, Types } from 'mongoose';
 
 export interface gpsLog {
-  location: string;
+  latitude: number;
+  longitude: number;
+  address: string;
   time: number;
 }
 
 const gpsLogSchema = new Schema<gpsLog>({
-  location: String,
+  latitude: Number,
+  longitude: Number,
+  address: String,
   time: Number,
 });
 
