@@ -21,9 +21,14 @@ const sendPostRequest = async (
   }
 };
 
-const getBikeLocationHistory = async (): Promise<
-  Array<{ location: string; time: number }>
-> => {
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  address: string;
+  time: number;
+}
+
+const getBikeLocationHistory = async (): Promise<Array<LocationData>> => {
   try {
     const embeddedDeviceId = await AsyncStorage.getItem("@embeddedDeviceId");
     const res = await fetch(`${API_URL}/logs/${embeddedDeviceId}`);

@@ -1,24 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, FlatList } from "react-native";
+import { StyleSheet, View, FlatList, Image } from "react-native";
 import { Text } from "@rneui/themed";
-import Map, { Polyline, Circle } from "react-native-maps";
+import Map, { Polyline, Marker } from "react-native-maps";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { getBikeLocationHistory } from "../../helpers/Requests";
-
-interface LocationDataPoint {
-  time: number;
-  latitude: number;
-  longitude: number;
-}
+import { getBikeLocationHistory, LocationData } from "../../helpers/Requests";
 
 const LocationHistory = () => {
+  const addressLengthLimit = 35;
+
   const [date, setDate] = useState(new Date(new Date().setHours(0, 0, 0, 0)));
 
-  const [locationArray, setLocationArray] = useState<Array<LocationDataPoint>>(
-    []
-  );
+  const [locationArray, setLocationArray] = useState<Array<LocationData>>([]);
   const [filteredLocations, setFilteredLocations] = useState<
-    Array<LocationDataPoint>
+    Array<LocationData>
   >([]);
 
   const [region, setRegion] = useState({
@@ -35,16 +29,20 @@ const LocationHistory = () => {
 
   // when selected date or location logs update, update filtered location logs and set new map area
   useEffect(() => {
-    const filtered = locationArray
-      .filter(
-        (location) =>
-          location.time &&
-          location.time > date.valueOf() &&
-          location.time < date.valueOf() + 86400000
-      )
-      .map((data) => ({
-        ...data,
-      }));
+    const repeatAddresses = new Set();
+
+    const filtered = locationArray.reverse().filter((location) => {
+      if (repeatAddresses.has(location.address)) {
+        return false;
+      }
+      repeatAddresses.add(location.address);
+
+      return (
+        location.time &&
+        location.time > date.valueOf() &&
+        location.time < date.valueOf() + 86400000
+      );
+    });
 
     if (filtered.length > 0) {
       setRegion({
@@ -62,15 +60,7 @@ const LocationHistory = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       const locations = await getBikeLocationHistory();
-      setLocationArray(
-        locations.map((data) => {
-          return {
-            time: data.time,
-            latitude: Number(data.location.split(",")[0]),
-            longitude: Number(data.location.split(",")[1]),
-          };
-        })
-      );
+      setLocationArray(locations);
     };
 
     fetchLocations();
@@ -93,36 +83,45 @@ const LocationHistory = () => {
       <Map region={region} style={styles.map}>
         {filteredLocations.length > 0 && (
           <>
+            <Marker
+              coordinate={filteredLocations[filteredLocations.length - 1]}
+              tappable={false}
+            >
+              <Image
+                source={require("../../assets/bike.png")}
+                style={{ height: 35, width: 35 }}
+              />
+            </Marker>
             <Polyline
               coordinates={filteredLocations}
-              strokeWidth={2}
-              strokeColor="#000" // fallback for when `strokeColors` is not supported by the map-provider
-              strokeColors={[
-                "rgba(156, 128, 255, 1)",
-                "rgba(156, 128, 255, 1)",
-                "rgba(109, 69, 255, 1)",
-                "rgba(56, 0, 255, 1)",
-              ]}
-            />
-            <Circle
-              center={filteredLocations[filteredLocations.length - 1]}
-              radius={20}
-              fillColor="rgba(56, 0, 255, 1)"
-              strokeColor="rgba(56, 0, 255, 1)"
+              strokeWidth={4}
+              strokeColor="rgba(76, 28, 173, 1)"
             />
           </>
         )}
       </Map>
       <View style={styles.logsContainer}>
-        <Text h4>Bike Location Logs:</Text>
+        <Text style={styles.title}>Bike Location Logs</Text>
         <FlatList
           data={filteredLocations}
           style={styles.listStyle}
+          ListEmptyComponent={() => (
+            <Text style={{ ...styles.listItemText, ...styles.emptyText }}>
+              No logs for {date.toDateString()}
+            </Text>
+          )}
           renderItem={({ item }) => (
             <View style={styles.listItem}>
-              <Text>{new Date(item.time).toLocaleTimeString("en-US")}</Text>
-              <Text>
-                ({item.latitude.toFixed(2)}, {item.longitude.toFixed(2)})
+              <Text style={styles.listItemText}>
+                {item.address.length > addressLengthLimit
+                  ? item.address.slice(0, addressLengthLimit - 3) + "..."
+                  : item.address}
+              </Text>
+              <Text style={styles.listItemText}>
+                {new Date(item.time).toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
               </Text>
             </View>
           )}
@@ -134,11 +133,11 @@ const LocationHistory = () => {
 
 const styles = StyleSheet.create({
   viewRoot: {
-    flex: 1,
     flexDirection: "column",
     alignItems: "center",
     margin: 0,
     padding: 0,
+    height: "100%",
   },
   header: {
     flexDirection: "row",
@@ -159,6 +158,12 @@ const styles = StyleSheet.create({
     top: 30,
     elevation: 5,
   },
+  title: {
+    fontSize: 22,
+    fontWeight: "600",
+    //alignSelf: "center",
+    marginLeft: 8,
+  },
   dateTimePicker: {
     height: 40,
     width: 140,
@@ -169,7 +174,13 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   logsContainer: {
-    paddingHorizontal: 20,
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    height: "50%",
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    paddingHorizontal: 14,
     paddingVertical: 18,
     shadowColor: "#000",
     shadowOffset: {
@@ -178,14 +189,15 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.23,
     shadowRadius: 2.62,
-
     elevation: 4,
     backgroundColor: "white",
   },
   listStyle: {
-    marginTop: 12,
+    marginTop: 10,
     borderTopColor: "rgba(170, 170, 170, 1)",
     borderTopWidth: 1,
+    marginBottom: 4,
+    paddingTop: 8,
   },
   listItem: {
     flex: 1,
@@ -193,10 +205,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(217, 217, 217, 1)",
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+  },
+  listItemText: {
+    fontSize: 15,
+  },
+  emptyText: {
+    paddingVertical: 10,
+    paddingHorizontal: 8,
   },
 });
 

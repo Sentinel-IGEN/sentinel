@@ -96,7 +96,7 @@ export default function NavigationStackView() {
             name="LocationHistory"
             component={LocationHistory}
             options={{
-              title: "Bike Location History",
+              title: "Location History",
               headerShadowVisible: true,
             }}
           />
