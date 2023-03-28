@@ -192,9 +192,10 @@ export class MobileController {
 
   @Get('/logs/:deviceId')
   async getGPSLogs(@Param('deviceId') deviceId) {
+    Logger.debug(`getGPSLogs called with deviceId: ${deviceId}`);
     const embeddedDevice = await this.MongoService.getEmbeddedDevice(deviceId);
-    
-    return embeddedDevice?.gpsLog
+
+    return embeddedDevice?.gpsLog;
   }
 
   /* FOR TESTING */

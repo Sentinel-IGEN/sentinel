@@ -15,18 +15,18 @@ const DeviceNameView = ({ navigation }) => {
   return (
     <View style={styles.viewRoot}>
       <Text h1 style={styles.header}>
-        Name your bike tag
+        What is your name?
       </Text>
       <Input
         style={styles.input}
         containerStyle={{ margin: 0 }}
         inputContainerStyle={styles.inputContainer}
         autoFocus={true}
-        placeholder="Sentinel bike tag name"
+        placeholder="Justin Bieber"
         onChangeText={(input) => setValue(input)}
       />
       <Text style={styles.infoText}>
-        Enter a name for your Sentinel bike tag.
+        Please enter your name above.
       </Text>
       <Button
         containerStyle={styles.button}

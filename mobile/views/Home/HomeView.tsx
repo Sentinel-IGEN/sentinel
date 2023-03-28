@@ -19,13 +19,26 @@ interface WebSocketMessage {
   payload: string;
 }
 
+interface WebSocketReplyGPSMessage {
+  topic: string;
+  payload: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+}
+
 const createTwoButtonAlert = () => {
   Alert.alert("Motion detected", "Your sentinel bike tag may be moving.", [
     { text: "OK", onPress: () => console.log("OK") },
     {
       text: "Turn off alarm",
-      onPress: async () =>
-        sendPostRequest("toggleAlarm", { status: 0, device: "device1" }),
+      onPress: async () => {
+        const embeddedDeviceId = await AsyncStorage.getItem(
+          "@embeddedDeviceId"
+        );
+        sendPostRequest("toggleAlarm", { status: 0, device: embeddedDeviceId });
+      },
     },
   ]);
 };
@@ -40,20 +53,22 @@ const HomeView = () => {
 
   const ws = useRef(new WebSocket(WS_URL)).current;
 
-  ws.onopen = () => {
-    const data = { command: "register", device: "device1" };
+  ws.onopen = async () => {
+    const embeddedDeviceId = await AsyncStorage.getItem("@embeddedDeviceId");
+    const data = { command: "register", device: embeddedDeviceId }; //TODO: change to actual device
     ws.send(JSON.stringify(data));
   };
 
   ws.onmessage = (data) => {
     console.log(data.data);
     try {
-      const serializedData: WebSocketMessage = JSON.parse(data.data);
+      const serializedData: WebSocketMessage | WebSocketReplyGPSMessage =
+        JSON.parse(data.data);
       switch (serializedData.topic) {
         case "lock_status":
           setLockState(serializedData.payload == "1");
           setLockLoading(false);
-          AsyncStorage.setItem("@lockStatus", serializedData.payload);
+          AsyncStorage.setItem("@lockStatus", serializedData.payload as string);
           break;
         case "motion_status":
           if (serializedData.payload == "1") {
@@ -74,9 +89,12 @@ const HomeView = () => {
           break;
         case "gps":
           if (!serializedData.payload) break;
-          const location = serializedData.payload.split(",");
-          let [lat, lon] = [location[0], location[1]];
-          setBikeGPSState({ latitude: Number(lat), longitude: Number(lon) });
+          const data = serializedData as WebSocketReplyGPSMessage;
+          setBikeGPSState({
+            latitude: data.payload.latitude,
+            longitude: data.payload.longitude,
+            address: data.payload.address,
+          });
           break;
         default:
           break;
@@ -90,13 +108,16 @@ const HomeView = () => {
     (async () => {
       try {
         const lockStatus = await AsyncStorage.getItem("@lockStatus");
+        const embeddedDeviceId = await AsyncStorage.getItem(
+          "@embeddedDeviceId"
+        );
         if (lockStatus) {
           // Re-sync with device
           const lockState = lockStatus == "1";
           setLockState(lockState);
           sendPostRequest("toggleLock", {
             status: lockState,
-            device: "device1",
+            device: embeddedDeviceId,
           });
         }
       } catch (e) {

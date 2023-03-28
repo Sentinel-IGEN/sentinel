@@ -4,12 +4,14 @@ import { Slider, Icon } from "@rneui/themed";
 import { debounce } from "lodash";
 import { sendPostRequest } from "../helpers/Requests";
 import { Text } from "@rneui/base";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AlarmSensitivitySlider = () => {
   const onValueChange = React.useRef(
     debounce(async (value: Number) => {
+      const embeddedDeviceId = await AsyncStorage.getItem("@embeddedDeviceId");
       await sendPostRequest("setMotionThreshold", {
-        device: "device1",
+        device: embeddedDeviceId,
         threshold: 10 - Number(value),
       });
     }, 500)
@@ -62,7 +64,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-  }
+  },
 });
 
 export default AlarmSensitivitySlider;

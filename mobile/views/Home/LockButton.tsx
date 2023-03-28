@@ -5,6 +5,7 @@ import { LockLoadingState, LockState } from "../../recoil_state";
 import { StyleSheet } from "react-native";
 import { Icon } from "@rneui/themed";
 import { sendPostRequest } from "../../helpers/Requests";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LockButton(props) {
   const lockState = useRecoilValue(LockState);
@@ -12,9 +13,10 @@ export default function LockButton(props) {
 
   const toggleLock = async () => {
     setIsLoading(true);
+    const embeddedDeviceId = await AsyncStorage.getItem("@embeddedDeviceId");
     sendPostRequest("toggleLock", {
       status: !lockState,
-      device: "device1",
+      device: embeddedDeviceId,
     });
   };
 
@@ -40,7 +42,7 @@ export default function LockButton(props) {
 
   return (
     <Button
-      color="#091156"
+      color="#151d6e"
       containerStyle={styles.buttonContainer}
       buttonStyle={styles.button}
       titleStyle={styles.buttonTitle}
