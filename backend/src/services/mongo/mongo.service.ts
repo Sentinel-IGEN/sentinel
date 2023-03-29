@@ -56,7 +56,7 @@ export class MongoService implements OnApplicationBootstrap {
   }
 
   async updateEmbeddedDevice(deviceData: UpdateDeviceDTO) {
-    Logger.debug('updateEmbeddedDevice called with payload: ', deviceData);
+    // Logger.debug('updateEmbeddedDevice called with payload: ', deviceData);
     const { token, ...device } = deviceData;
     let tokenHash: string | undefined;
 
@@ -174,7 +174,12 @@ export class MongoService implements OnApplicationBootstrap {
   }
 
   //Add GPS Log to Embedded Device using embedded device uuid
-  async appendGPSLog(uuid: string, latitude: number, longitude: number, address: string) {
+  async appendGPSLog(
+    uuid: string,
+    latitude: number,
+    longitude: number,
+    address: string,
+  ) {
     Logger.log(
       `appendGPSLog call with location: "${latitude}, ${longitude}" and uuid: "${uuid}"`,
     );
