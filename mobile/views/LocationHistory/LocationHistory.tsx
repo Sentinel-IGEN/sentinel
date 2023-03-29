@@ -52,7 +52,7 @@ const LocationHistory = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       const locations = await getBikeLocationHistory();
-      setLocationArray(locations.reverse());
+      setLocationArray(Array.isArray(locations) ? locations.reverse() : []);
     };
 
     fetchLocations();

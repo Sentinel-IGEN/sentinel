@@ -1,29 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { DeviceHeartBeatState, DeviceConnectionState } from "../recoil_state";
-import { useRecoilState, useRecoilValue } from "recoil";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { useRecoilState } from "recoil";
+import { Alert, StyleSheet, Text } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const DeviceConnectionStatusBar = () => {
   const [deviceHeartBeat, setDeviceHeartBeat] =
     useRecoilState(DeviceHeartBeatState);
   const [connected, setConnected] = useRecoilState(DeviceConnectionState);
-  const [alertActive, setAlertActive] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
       const newConnectionStatus = deviceHeartBeat + 15_000 > Date.now();
-      if (connected && !newConnectionStatus && !alertActive) {
-        setAlertActive(true);
+      if (connected && !newConnectionStatus) {
         Alert.alert(
           "Your Sentinel bike tag has disconnected!",
           "",
           [
             {
               text: "OK",
-              onPress: () => {
-                setAlertActive(false);
-              },
+              onPress: () => {},
             },
           ],
           { cancelable: false }
@@ -33,7 +29,7 @@ const DeviceConnectionStatusBar = () => {
     }, 10_000);
 
     return () => clearInterval(interval);
-  }, [deviceHeartBeat]);
+  }, [deviceHeartBeat, connected]);
 
   useEffect(() => {
     (async () => {
