@@ -40,7 +40,7 @@ const bikeGPSState = atom({
   default: {
     latitude: 49.26400057251193,
     longitude: -123.25015147397013,
-    address: "576 West 44th Ave, Vancouver V3X 7T3",
+    address: "2205 E Mall, Vancouver, BC V6T 1Z4",
   },
 });
 

@@ -39,7 +39,7 @@ const MapView = (props) => {
       <>
         <Circle
           center={bikeLocation}
-          radius={150}
+          radius={30}
           strokeWidth={2}
           fillColor="rgba(29, 0, 255, 0.09)"
           strokeColor="rgba(29, 0, 255, 0.47)"

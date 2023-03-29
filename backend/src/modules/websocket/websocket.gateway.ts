@@ -6,7 +6,7 @@ import {
 } from '@nestjs/websockets';
 import { FetchService } from 'nestjs-fetch';
 import WebSocket, { Server } from 'ws';
-import { MongoService } from '../../services';
+import { MongoService, SNSService } from '../../services';
 
 interface WebSocketRecieveMessage {
   command: string;
@@ -43,6 +43,7 @@ export class WebSocketListener implements OnGatewayInit {
   constructor(
     private readonly MongoService: MongoService,
     private readonly fetch: FetchService,
+    private readonly SNSService: SNSService,
   ) {}
 
   @WBServer()
@@ -110,7 +111,9 @@ export class WebSocketListener implements OnGatewayInit {
       );
 
       const geoData: GeocodeResponse = await res.json();
-      const address = `${geoData.address.house_number || ""} ${geoData.address.road || ""}, ${geoData.address.postcode || ""}`.trim();
+      const address = `${geoData.address.house_number || ''} ${
+        geoData.address.road || ''
+      }, ${geoData.address.postcode || ''}`.trim();
 
       this.MongoService.appendGPSLog(device, latitude, longitude, address);
 
@@ -131,6 +134,31 @@ export class WebSocketListener implements OnGatewayInit {
       if (this.connections.has(device)) {
         const data: WebSocketReplyMessage = { topic: topic, payload: payload };
         this.connections.get(device)?.send(JSON.stringify(data));
+      }
+
+      // If motion detected, send sms instead
+      if (topic == 'motion_status' && payload == '1') {
+        //get embedded device
+        const embeddedDevice = await this.MongoService.getEmbeddedDevice(
+          device,
+        );
+        if (!embeddedDevice?.userId) {
+          Logger.error(
+            'Cannot find embeddedDevice from device id in MQTT message from embedded device',
+          );
+          return;
+        }
+
+        const user = await this.MongoService.getUser(embeddedDevice.userId);
+        // Send SMS
+        if (!user?.phoneNumber) {
+          Logger.error('User does not have phone number registered.');
+          return;
+        }
+        this.SNSService.sendSMS(
+          'Sentinel Alert: Motion detected on your bike.',
+          user.phoneNumber,
+        );
       }
     }
   }

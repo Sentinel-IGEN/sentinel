@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   SNSClient,
   CreateTopicCommand,
@@ -106,9 +106,10 @@ export class SNSService {
   }
 
   async sendSMS(message: string, phoneNumber: string) {
+    Logger.log(`Attempting to send sms: "${message}" to ${phoneNumber}`);
     const command = new PublishCommand({
       PhoneNumber: phoneNumber,
-      Message: message
+      Message: message,
     });
 
     const response = await this.sns.send(command);

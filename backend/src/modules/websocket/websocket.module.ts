@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { FetchModule } from 'nestjs-fetch';
 import { WebSocketListener } from './websocket.gateway';
-import { MongoModule } from '../../services';
+import { MongoModule, SNSModule } from '../../services';
 
 @Module({
-  imports: [MongoModule, FetchModule],
+  imports: [MongoModule, SNSModule, FetchModule],
   providers: [WebSocketListener],
   exports: [WebSocketListener],
 })
