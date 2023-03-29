@@ -29,20 +29,12 @@ const LocationHistory = () => {
 
   // when selected date or location logs update, update filtered location logs and set new map area
   useEffect(() => {
-    const repeatAddresses = new Set();
-
-    const filtered = locationArray.reverse().filter((location) => {
-      if (repeatAddresses.has(location.address)) {
-        return false;
-      }
-      repeatAddresses.add(location.address);
-
-      return (
+    const filtered = locationArray.filter(
+      (location) =>
         location.time &&
         location.time > date.valueOf() &&
         location.time < date.valueOf() + 86400000
-      );
-    });
+    );
 
     if (filtered.length > 0) {
       setRegion({
@@ -60,7 +52,7 @@ const LocationHistory = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       const locations = await getBikeLocationHistory();
-      setLocationArray(locations);
+      setLocationArray(locations.reverse());
     };
 
     fetchLocations();
@@ -83,10 +75,7 @@ const LocationHistory = () => {
       <Map region={region} style={styles.map}>
         {filteredLocations.length > 0 && (
           <>
-            <Marker
-              coordinate={filteredLocations[0]}
-              tappable={false}
-            >
+            <Marker coordinate={filteredLocations[0]} tappable={false}>
               <Image
                 source={require("../../assets/bike.png")}
                 style={{ height: 35, width: 35 }}
@@ -103,7 +92,25 @@ const LocationHistory = () => {
       <View style={styles.logsContainer}>
         <Text style={styles.title}>Bike Location Logs</Text>
         <FlatList
-          data={filteredLocations}
+          data={(() => {
+            // FILTER OUT REPEAT ADDRESSES THAT OCCUR AT THE SAME TIME
+            const repeatAddressTimes = new Set();
+
+            return filteredLocations.filter((location) => {
+              const addressTime =
+                location.address +
+                new Date(location.time).toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                });
+
+              if (repeatAddressTimes.has(addressTime)) {
+                return false;
+              }
+              repeatAddressTimes.add(addressTime);
+              return true;
+            });
+          })()}
           style={styles.listStyle}
           ListEmptyComponent={() => (
             <Text style={{ ...styles.listItemText, ...styles.emptyText }}>
