@@ -134,9 +134,10 @@ export class WebSocketListener implements OnGatewayInit {
       if (this.connections.has(device)) {
         const data: WebSocketReplyMessage = { topic: topic, payload: payload };
         this.connections.get(device)?.send(JSON.stringify(data));
+      }
 
-        // If mobile not connected and motion detected, send sms instead
-      } else if (topic == 'motion_status' && payload == '1') {
+      // If motion detected, send sms instead
+      if (topic == 'motion_status' && payload == '1') {
         //get embedded device
         const embeddedDevice = await this.MongoService.getEmbeddedDevice(
           device,
