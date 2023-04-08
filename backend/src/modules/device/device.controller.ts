@@ -2,7 +2,8 @@ import { Controller, Body, Post, HttpException } from '@nestjs/common';
 import { Error } from 'mongoose';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MongoService, MqttService } from '../../services';
-import { CreateDeviceDTO } from 'src/schemas/dtos';
+import { WebSocketListener } from '../websocket/websocket.gateway';
+import { CreateDeviceDTO, MqttDTO } from 'src/schemas/dtos';
 import { EmbeddedDevice } from 'src/schemas/EmbeddedDevice.schema';
 
 @Controller('/device')
@@ -10,6 +11,7 @@ export class DeviceController {
   constructor(
     private readonly MongoService: MongoService,
     private readonly MqttService: MqttService,
+    private readonly webSocketListener: WebSocketListener,
   ) {}
 
   // Create embedded device using device UUID
@@ -27,6 +29,20 @@ export class DeviceController {
       if (err instanceof Error.ValidationError) {
         throw new HttpException(err.message, 400);
       }
+      return err;
+    }
+  }
+
+  @Post('/MQTT/propogateToMobile')
+  async simulateMQTTMessage(@Body() mqttDTO: MqttDTO) {
+    try {
+      await this.webSocketListener.sendMessage(
+        mqttDTO.device,
+        mqttDTO.topic,
+        mqttDTO.payload,
+      );
+      return 'Success';
+    } catch (err) {
       return err;
     }
   }
