@@ -15,6 +15,9 @@
 
 // GPRS credentials
 const char apn[] = "internet.freedommobile.ca";
+// const char apn[] = "web.wireless.bell.ca";
+// const char apn[] = "sp.koodo.com";
+
 
 #include <TinyGsmClient.h>
 #include <SPI.h>
@@ -35,6 +38,8 @@ namespace Modem
     void collectDiagnosisData(TinyGsm modem);
     void requestUEInfo(TinyGsm modem);
     void initialize(TinyGsm modem, bool restart = false, bool showInfo = true);
+    void checkSimStatus(TinyGsm modem);
+    // void setLockedBand(TinyGsm modem);
 }
 
 #endif

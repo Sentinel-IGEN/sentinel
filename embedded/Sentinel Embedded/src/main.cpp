@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <atomic>
 #include <Modem.h>
 #include <TinyGsmClient.h>
 #include <PubSubClient.h>
@@ -10,11 +9,18 @@
 #include <ctype.h>
 #include <secrets.h>
 #include "protothreads.h"
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
 
 /*********************************************
  * Constants
  **********************************************/
-#define DEVICE_NAME "device1" // Unique for each bike tag
+#define DEVICE_NAME "demo01" // Unique for each bike tag
+
+// Device options
+#define USE_WIFI
+#define USE_IMU
+#define USE_DEBUG
 
 // Misc
 #define S_TO_US 1000000
@@ -39,12 +45,8 @@
 #define GPS_UPDATE_INTERVAL_MS 10 * S_TO_MS
 
 /*********************************************
- * MQTT
- *
- * Constants for MQTT configuration
+ * MQTT/ modem/ WiFi variables
  **********************************************/
-const char *broker = "fb14f44e5bae4ffbb829c97b6cdc10eb.s2.eu.hivemq.cloud";
-
 // Subscribe Topics
 String topicLockRequest = String("lock/") + DEVICE_NAME;
 String topicMotionThresholdRequest = String("motion_threshold/") + DEVICE_NAME;
@@ -58,11 +60,13 @@ String topicLockStatus = String("lock_status/") + DEVICE_NAME;
 String topicDeviceHealth = String("device_health/") + DEVICE_NAME;
 String topicGPS = String("gps/") + DEVICE_NAME;
 
-/*********************************************
- * MQTT/ modem variables
- **********************************************/
+// LTE Modem and wifi
 TinyGsm modem(SerialAT);
+#ifdef USE_WIFI
+WiFiClientSecure client;
+#else
 TinyGsmClientSecure client(modem);
+#endif
 PubSubClient mqtt(client);
 char mqttClientID[15];
 int numReconnect = 0;
@@ -90,11 +94,14 @@ DynamicJsonDocument doc(1024);
  **********************************************/
 uint32_t lastAlarmTrigger = 0;
 volatile bool alarmStatus = false;
-unsigned const long alarmSleepTimeMS = 50;
+bool alarmToggle = false;
+unsigned long alarmToggleTimeMS = 0;
+unsigned const long alarmSleepTimeMS = 80;
 
 /*********************************************
  * Alarm thread
  **********************************************/
+#ifndef USE_WIFI
 pt ptAlarm;
 int alarmThread(struct pt *pt)
 {
@@ -121,6 +128,7 @@ int alarmThread(struct pt *pt)
 
     PT_END(pt);
 }
+#endif
 
 /**
  * Callback for motion detection interrupt
@@ -140,10 +148,21 @@ static void generateUniqueID()
         mqttClientID[i] = 'a' + random(300) % 26;
 }
 
+void debugln(const String &s) {
+    SerialMon.println(s);
+}
+
+#ifdef USE_DEBUG
+#define DEBUG(s) debugln(s);
+#else
+#define DEBUG(S)
+#endif
+
+
 static void mqttCallback(char *topic, byte *payload, unsigned int len)
 {
     String data = String((char *)payload, len);
-    SerialMon.println("Message arrived [" + String(topic) + "]: " + data);
+    DEBUG("Message arrived [" + String(topic) + "]: " + data)
     deserializeJson(doc, data);
     String topicString = String(topic);
 
@@ -191,20 +210,29 @@ bool mqttConnect()
 {
     generateUniqueID();
     mqtt.disconnect();
+#ifdef USE_WIFI
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+    }
+#else
     Modem::initialize(modem, true);
+#endif
+
     delay(2000);
 
-    SerialMon.println("Connecting to " + String(MQTT_BROKER) + " with client ID: " + mqttClientID + " and user " + MQTT_USER);
+    DEBUG("Connecting to " + String(MQTT_BROKER) + " with client ID: " + mqttClientID + " and user " + MQTT_USER)
     bool mqttConnected = mqtt.connect(mqttClientID, MQTT_USER, MQTT_PASSWORD, "device_health/device1", 2, false, "0", true);
-
 
     if (mqttConnected == false)
     {
-        SerialMon.println("MQTT connection failed.");
+        DEBUG("MQTT connection failed.")
         return false;
     }
 
-    SerialMon.println("MQTT connection success!");
+    DEBUG("MQTT connection success!")
     for (String &topic : subscribeTopics)
     {
         mqtt.subscribe(topic.c_str(), 1);
@@ -218,6 +246,19 @@ void setup()
     SerialAT.begin(UART_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
     pinMode(LED_PIN, OUTPUT);
 
+#ifdef USE_WIFI
+    // Set up wifi certificate
+    client.setCACert(cert);
+    client.setInsecure();
+#else
+    // Set up alarm thread
+    PT_INIT(&ptAlarm);
+#endif
+
+    // Setup alarm settings
+    pinMode(ALARM_PIN, OUTPUT);
+
+#ifdef USE_IMU
     // IMU setup
     if (!mpu.begin())
     {
@@ -225,10 +266,6 @@ void setup()
         while (1)
             delay(10);
     }
-
-    // Setup alarm settings
-    PT_INIT(&ptAlarm);
-    pinMode(ALARM_PIN, OUTPUT);
 
     // Setup motion detection
     mpu.setMotionInterrupt(false);
@@ -247,24 +284,26 @@ void setup()
     attachInterrupt(digitalPinToInterrupt(32), handleMotionDetection, HIGH);
 
     // MQTT setup
-    mqtt.setServer(broker, 8883);
+    mqtt.setServer(MQTT_BROKER, 8883);
     mqtt.setCallback(mqttCallback);
     mqtt.setKeepAlive(30);
+#endif
 
     // GPS Setup
-    // Modem::enableGPS;
+    // Modem::enableGPS(modem);
 }
 
 void loop()
 {
     // LED off when connected
-    modem.isNetworkConnected() ? digitalWrite(LED_PIN, HIGH) : digitalWrite(LED_PIN, LOW);
+    digitalWrite(LED_PIN, HIGH);
 
     if (!mqtt.connected())
     {
-        SerialMon.println("MQTT not connected, connecting now...");
+        digitalWrite(LED_PIN, LOW);
+        DEBUG("MQTT not connected, connecting now...")
         mqttConnect();
-        SerialMon.println("State: " + String(mqtt.state()));
+        DEBUG("State: " + String(mqtt.state()))
     }
 
     currentTime = millis();
@@ -275,17 +314,18 @@ void loop()
         lastHealthPing = currentTime;
     }
 
-    if (currentTime - lastGPSPing > GPS_UPDATE_INTERVAL_MS)
-    {
-        if (modem.getGPS(&lat, &lon)) {
-            String location = String(lat) + "," + String(lon);
-            SerialMon.print(location);
-            mqtt.publish(topicGPS.c_str(), location.c_str());
-        } else {
-            mqtt.publish(topicGPS.c_str(), "49.262959,-123.245257");
-        }
-        lastGPSPing = currentTime;
-    }
+    // if (currentTime - lastGPSPing > GPS_UPDATE_INTERVAL_MS)
+    // {
+    //     if (modem.getGPS(&lat, &lon)) {
+    //         String location = String(lat) + "," + String(lon);
+    //         SerialMon.print(location);
+    //         mqtt.publish(topicGPS.c_str(), location.c_str());
+    //     }
+    //     else {
+    //         mqtt.publish(topicGPS.c_str(), "0,0");
+    //     }
+    //     lastGPSPing = currentTime;
+    // }
 
     if (lockStatus && motionDetected && ((currentTime - lastMotionPing) > MOTION_DETECTION_INTERVAL_MS))
     {
@@ -302,10 +342,30 @@ void loop()
         motionDetected = false;
     }
 
-    PT_SCHEDULE(alarmThread(&ptAlarm));
+    // Alarm
+    if (currentTime - lastAlarmTrigger > ALARM_RESET_INTERVAL_MS)
+        alarmStatus = false;
+
+    if (alarmStatus)
+    {
+        if (currentTime > alarmToggleTimeMS)
+        {
+            alarmToggle = !alarmToggle;
+            digitalWrite(ALARM_PIN, alarmToggle);
+            alarmToggleTimeMS += alarmSleepTimeMS;
+        }
+    }
+    else
+    {
+        digitalWrite(ALARM_PIN, LOW);
+    }
+
     mqtt.loop();
 
+#ifndef USE_WIFI
+    PT_SCHEDULE(alarmThread(&ptAlarm));
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, LOW);
-    esp_sleep_enable_timer_wakeup(0.2 * S_TO_US);
+    esp_sleep_enable_timer_wakeup(0.05 * S_TO_US);
     esp_light_sleep_start();
+#endif
 }
