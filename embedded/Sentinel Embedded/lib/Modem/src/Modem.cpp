@@ -47,8 +47,24 @@ namespace Modem
     void modemRestart()
     {
         modemPowerOff();
-        delay(1000);
+        delay(5000);
         modemPowerOn();
+    }
+
+    void checkSimStatus(TinyGsm modem)
+    {
+        unsigned long timeout = millis();
+        Serial.println("Checking SIM card status...");
+        while (modem.getSimStatus() != SIM_READY)
+        {
+            Serial.print(".");
+            if (millis() - timeout > 60000)
+            {
+                Serial.println("SIM card has not been detected.");
+                return;
+            }
+        }
+        Serial.println("SIM card detected!");
     }
 
     /*
@@ -98,6 +114,17 @@ namespace Modem
         res = "";
         Serial.println("=======================");
 
+        // Preferred network band:
+        Serial.println("=====Available network bands=====");
+        modem.sendAT("+CBANDCFG?");
+        if (modem.waitResponse(1000L, res) == 1)
+        {
+            res.replace(GSM_NL "OK" GSM_NL, "");
+            Serial.println(res);
+        }
+        res = "";
+        Serial.println("=======================");
+
         Serial.println("Modem Name: " + modem.getModemName());
         Serial.println("Modem Info: " + modem.getModemInfo());
     }
@@ -123,15 +150,12 @@ namespace Modem
         bool success = false;
         while (!success)
         {
-            modemPowerOn();
-            delay(5000);
-
-            if (!modem.init() || restart)
+            // Setup modem
+            do
             {
                 SerialMon.println("Restarting modem...");
                 Modem::modemRestart();
-                delay(1000);
-            }
+            } while (!modem.testAT());
 
             // 1 CAT-M
             // 2 NB-IoT
@@ -143,8 +167,19 @@ namespace Modem
             // 13, GSM only
             // 38, LTE only
             // 51, GSM and LTE only
-            modem.setNetworkMode(38);
-            delay(5000);
+            modem.setNetworkMode(2);
+
+            // String res;
+            // modem.sendAT("+CBANDCFG=\"CAT-M\",4");
+            // if (modem.waitResponse(1000L, res) != 1)
+            // {
+            //     SerialMon.println("Error in setting preferred network band");
+            // }
+
+            delay(3000);
+
+            // Check sim status
+            checkSimStatus(modem);
 
             while (!modem.isNetworkConnected())
             {
@@ -154,7 +189,7 @@ namespace Modem
                 delay(1000);
             }
             SerialMon.println("Connecting to " + String(apn));
-            
+
             if (modem.gprsConnect(apn))
                 success = true;
             else
@@ -169,4 +204,5 @@ namespace Modem
             requestUEInfo(modem);
         }
     }
+
 }
