@@ -56,3 +56,9 @@ export interface SendSMSDTO {
   phoneNumber: string;
   message: string;
 }
+
+export interface MqttDTO {
+  device: string;
+  topic: string;
+  payload: string;
+}
