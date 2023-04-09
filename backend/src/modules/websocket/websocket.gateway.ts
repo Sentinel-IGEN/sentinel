@@ -116,26 +116,31 @@ export class WebSocketListener implements OnGatewayInit {
           Logger.error('Payload is empty for wifi_gps topic');
           return;
         }
-        const body = {
-          considerIp: false,
-          wifiAccessPoints: JSON.parse(payload),
-        };
 
-        const res = await this.fetch.post(
-          `https://www.googleapis.com/geolocation/v1/geolocate?key=${process.env.GOOGLE_MAPS_API_KEY}`,
-          {
-            body: JSON.stringify(body),
-          },
-        );
+        try {
+          const body = {
+            considerIp: false,
+            wifiAccessPoints: JSON.parse(payload),
+          };
 
-        if (res.status != 200) {
-          Logger.error('Geolocation API call failed');
-          return;
+          const res = await this.fetch.post(
+            `https://www.googleapis.com/geolocation/v1/geolocate?key=${process.env.GOOGLE_MAPS_API_KEY}`,
+            {
+              body: JSON.stringify(body),
+            },
+          );
+
+          if (res.status != 200) {
+            Logger.error('Geolocation API call failed');
+            return;
+          }
+
+          const data: WiFiLocationResponse = await res.json();
+          [latitude, longitude] = [data.location.lat, data.location.lng];
+          Logger.log(data);
+        } catch (e) {
+          Logger.error(e);
         }
-
-        const data: WiFiLocationResponse = await res.json();
-        [latitude, longitude] = [data.location.lat, data.location.lng];
-        Logger.log(data);
       }
 
       if (!(latitude && longitude)) {
@@ -159,7 +164,7 @@ export class WebSocketListener implements OnGatewayInit {
       // propogate gps message to mobile if device connected
       if (this.connections.has(device)) {
         const data: WebSocketReplyGPSMessage = {
-          topic: topic,
+          topic: 'gps',
           payload: {
             latitude,
             longitude,

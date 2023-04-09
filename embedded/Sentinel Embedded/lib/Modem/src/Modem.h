@@ -12,7 +12,7 @@
 #define UART_BAUD 9600
 #define PIN_TX 27
 #define PIN_RX 26
-#define MAX_WIFI_SCAN 127
+#define MAX_WIFI_SCAN 30
 
 // GPRS credentials
 const char apn[] = "internet.freedommobile.ca";
