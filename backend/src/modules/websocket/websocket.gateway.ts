@@ -37,6 +37,14 @@ interface GeocodeResponse {
   };
 }
 
+interface WiFiLocationResponse {
+  location: {
+    lat: number;
+    lng: number;
+  };
+  accuracy: number;
+}
+
 @Injectable()
 @WebSocketGateway()
 export class WebSocketListener implements OnGatewayInit {
@@ -94,12 +102,41 @@ export class WebSocketListener implements OnGatewayInit {
 
   async sendMessage(device: string, topic: string, payload: string) {
     // Handle GPS caching
-    if (topic === 'gps') {
-      const location = payload.split(',');
-      const [latitude, longitude] = [
-        Number(Number(location[0]).toFixed(4)),
-        Number(Number(location[1]).toFixed(4)),
-      ];
+    if (topic === 'gps' || topic === 'wifi_gps') {
+      let [latitude, longitude] = [0, 0];
+
+      if (topic === 'gps') {
+        const location = payload.split(',');
+        [latitude, longitude] = [
+          Number(Number(location[0]).toFixed(4)),
+          Number(Number(location[1]).toFixed(4)),
+        ];
+      } else {
+        if (payload.length == 0) {
+          Logger.error('Payload is empty for wifi_gps topic');
+          return;
+        }
+        const body = {
+          considerIp: false,
+          wifiAccessPoints: JSON.parse(payload),
+        };
+
+        const res = await this.fetch.post(
+          `https://www.googleapis.com/geolocation/v1/geolocate?key=${process.env.GOOGLE_MAPS_API_KEY}`,
+          {
+            body: JSON.stringify(body),
+          },
+        );
+
+        if (res.status != 200) {
+          Logger.error('Geolocation API call failed');
+          return;
+        }
+
+        const data: WiFiLocationResponse = await res.json();
+        [latitude, longitude] = [data.location.lat, data.location.lng];
+        Logger.log(data);
+      }
 
       if (!(latitude && longitude)) {
         Logger.error('latitude and longitude not provided');
@@ -115,6 +152,8 @@ export class WebSocketListener implements OnGatewayInit {
         geoData.address.road || ''
       }, ${geoData.address.postcode || ''}`.trim();
 
+      Logger.log(address);
+
       this.MongoService.appendGPSLog(device, latitude, longitude, address);
 
       // propogate gps message to mobile if device connected
@@ -129,37 +168,36 @@ export class WebSocketListener implements OnGatewayInit {
         };
         this.connections.get(device)?.send(JSON.stringify(data));
       }
-    } else {
-      // else, propogate message to mobile if device connected
-      if (this.connections.has(device)) {
-        const data: WebSocketReplyMessage = { topic: topic, payload: payload };
-        this.connections.get(device)?.send(JSON.stringify(data));
+      return;
+    }
+
+    // Propogate message to mobile if device connected
+    if (this.connections.has(device)) {
+      const data: WebSocketReplyMessage = { topic: topic, payload: payload };
+      this.connections.get(device)?.send(JSON.stringify(data));
+    }
+
+    // If motion detected, send sms instead
+    if (topic == 'motion_status' && payload == '1') {
+      //get embedded device
+      const embeddedDevice = await this.MongoService.getEmbeddedDevice(device);
+      if (!embeddedDevice?.userId) {
+        Logger.error(
+          'Cannot find embeddedDevice from device id in MQTT message from embedded device',
+        );
+        return;
       }
 
-      // If motion detected, send sms instead
-      if (topic == 'motion_status' && payload == '1') {
-        //get embedded device
-        const embeddedDevice = await this.MongoService.getEmbeddedDevice(
-          device,
-        );
-        if (!embeddedDevice?.userId) {
-          Logger.error(
-            'Cannot find embeddedDevice from device id in MQTT message from embedded device',
-          );
-          return;
-        }
-
-        const user = await this.MongoService.getUser(embeddedDevice.userId);
-        // Send SMS
-        if (!user?.phoneNumber) {
-          Logger.error('User does not have phone number registered.');
-          return;
-        }
-        this.SNSService.sendSMS(
-          'Sentinel Alert: Motion detected on your bike.',
-          user.phoneNumber,
-        );
+      const user = await this.MongoService.getUser(embeddedDevice.userId);
+      // Send SMS
+      if (!user?.phoneNumber) {
+        Logger.error('User does not have phone number registered.');
+        return;
       }
+      this.SNSService.sendSMS(
+        'Sentinel Alert: Motion detected on your bike.',
+        user.phoneNumber,
+      );
     }
   }
 

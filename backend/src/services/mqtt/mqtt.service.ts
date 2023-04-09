@@ -10,6 +10,7 @@ export class MqttService implements OnApplicationBootstrap {
     'lock_status/#',
     'motion_status/#',
     'gps/#',
+    'wifi_gps/#',
   ];
   publishTopics = ['alarm', 'lock', 'motion_threshold'];
   private readonly webSocketListener: WebSocketListener;

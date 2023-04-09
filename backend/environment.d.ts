@@ -10,6 +10,7 @@ declare global {
       MQTT_USERNAME: string;
       MQTT_PASSWORD: string;
       MQTT_CLUSTER_URL: string;
+      GOOGLE_MAPS_API_KEY: string;
     }
   }
 }
