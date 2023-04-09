@@ -33,7 +33,7 @@ export class DeviceController {
     }
   }
 
-  @Post('/MQTT/propogateToMobile')
+  @Post('/MQTT/simulateMQTTMessage')
   async simulateMQTTMessage(@Body() mqttDTO: MqttDTO) {
     try {
       await this.webSocketListener.sendMessage(
