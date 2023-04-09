@@ -1,5 +1,3 @@
-#include <PubSubClient.h>
-
 // Wifi
 const char ssid[] = "";
 const char password[] = "";
@@ -27,9 +25,6 @@ void setup()
     Serial.println("WiFi connected");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
-
-    WiFiClient client;
-    PubSubClient mqtt(client);
 }
 
 

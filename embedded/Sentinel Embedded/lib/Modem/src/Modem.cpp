@@ -205,4 +205,44 @@ namespace Modem
         }
     }
 
+    String MACtoString(uint8_t *macAddress)
+    {
+        const int MAC_ADDR_SIZE = 18;
+        char macStr[MAC_ADDR_SIZE] = {0};
+        snprintf(macStr, MAC_ADDR_SIZE, "%02X:%02X:%02X:%02X:%02X:%02X", macAddress[0], macAddress[1], macAddress[2], macAddress[3], macAddress[4], macAddress[5]);
+        return String(macStr);
+    }
+
+    /*
+     * Scans surrounding wifi networks and formats it as a json object.
+     * Returns true when scan is complete.
+    */
+    bool getSurroundingWiFiJsonAsync(String &locationJSON)
+    {
+        int n = WiFi.scanComplete();
+        if (n == -2)
+        {
+            WiFi.scanNetworks(true);
+        }
+        else if (n > 0)
+        {
+            locationJSON = "[";
+            n = min(n, MAX_WIFI_SCAN);
+            for (uint8_t i = 0; i < n; i++)
+            {
+                locationJSON += "{\"macAddress\":\"" + MACtoString(WiFi.BSSID(i)) + "\",";
+                locationJSON += "\"signalStrength\":" + String(WiFi.RSSI(i)) + ",";
+                locationJSON += "\"channel\":" + String(WiFi.channel(i)) + "}";
+                if (i < (n - 1))
+                {
+                    locationJSON += ",\n";
+                }
+            }
+            WiFi.scanDelete();
+            locationJSON += "]";
+            return true;
+        }
+        return false;
+    }
+
 }

@@ -12,6 +12,7 @@
 #define UART_BAUD 9600
 #define PIN_TX 27
 #define PIN_RX 26
+#define MAX_WIFI_SCAN 127
 
 // GPRS credentials
 const char apn[] = "internet.freedommobile.ca";
@@ -22,9 +23,8 @@ const char apn[] = "internet.freedommobile.ca";
 #include <TinyGsmClient.h>
 #include <SPI.h>
 #include <Ticker.h>
+#include <WiFi.h>
 
-#define uS_TO_S_FACTOR 1000000ULL // Conversion factor for micro seconds to seconds
-#define TIME_TO_SLEEP 60          // Time ESP32 will go to sleep (in seconds)
 #define PWR_PIN 4
 #define LED_PIN 12
 
@@ -39,7 +39,8 @@ namespace Modem
     void requestUEInfo(TinyGsm modem);
     void initialize(TinyGsm modem, bool restart = false, bool showInfo = true);
     void checkSimStatus(TinyGsm modem);
-    // void setLockedBand(TinyGsm modem);
+    String MACtoString(uint8_t *macAddress);
+    bool getSurroundingWiFiJsonAsync(String& locationJSON);
 }
 
 #endif

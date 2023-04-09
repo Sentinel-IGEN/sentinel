@@ -8,7 +8,6 @@
 #include <Wire.h>
 #include <ctype.h>
 #include <secrets.h>
-#include "protothreads.h"
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
@@ -18,9 +17,10 @@
 #define DEVICE_NAME "demo01" // Unique for each bike tag
 
 // Device options
+#define USE_DEBUG
 #define USE_WIFI
 #define USE_IMU
-#define USE_DEBUG
+#define USE_WIFI_LOCATION
 
 // Misc
 #define S_TO_US 1000000
@@ -42,7 +42,14 @@
 #define ALARM_RESET_INTERVAL_MS 6 * S_TO_MS
 
 // GPS
-#define GPS_UPDATE_INTERVAL_MS 10 * S_TO_MS
+#define GPS_UPDATE_INTERVAL_MS 30 * S_TO_MS
+
+// Debug macro
+#ifdef USE_DEBUG
+#define DEBUG(s) SerialMon.println(s);
+#else
+#define DEBUG(S) (...);
+#endif
 
 /*********************************************
  * MQTT/ modem/ WiFi variables
@@ -59,6 +66,7 @@ String topicMotionThresholdStatus = String("motion_threshold_status/") + DEVICE_
 String topicLockStatus = String("lock_status/") + DEVICE_NAME;
 String topicDeviceHealth = String("device_health/") + DEVICE_NAME;
 String topicGPS = String("gps/") + DEVICE_NAME;
+String topicWifiGPS = String("wifi_gps/") + DEVICE_NAME;
 
 // LTE Modem and wifi
 TinyGsm modem(SerialAT);
@@ -88,6 +96,8 @@ uint32_t lastMotionPing = 0;
 uint32_t lastGPSPing = 0;
 float lat, lon;
 DynamicJsonDocument doc(1024);
+bool wifiScanComplete = false;
+String wifiLocation = "";
 
 /*********************************************
  * Alarm timing
@@ -97,38 +107,6 @@ volatile bool alarmStatus = false;
 bool alarmToggle = false;
 unsigned long alarmToggleTimeMS = 0;
 unsigned const long alarmSleepTimeMS = 80;
-
-/*********************************************
- * Alarm thread
- **********************************************/
-#ifndef USE_WIFI
-pt ptAlarm;
-int alarmThread(struct pt *pt)
-{
-    PT_BEGIN(pt);
-
-    for (;;)
-    {
-        if (millis() - lastAlarmTrigger > ALARM_RESET_INTERVAL_MS)
-            alarmStatus = false;
-
-        if (alarmStatus)
-        {
-            digitalWrite(ALARM_PIN, HIGH);
-            PT_SLEEP(pt, alarmSleepTimeMS);
-            digitalWrite(ALARM_PIN, LOW);
-            PT_SLEEP(pt, alarmSleepTimeMS);
-        }
-        else
-        {
-            digitalWrite(ALARM_PIN, LOW);
-            PT_YIELD(pt);
-        }
-    }
-
-    PT_END(pt);
-}
-#endif
 
 /**
  * Callback for motion detection interrupt
@@ -147,17 +125,6 @@ static void generateUniqueID()
     for (int i = 0; i < 14; ++i)
         mqttClientID[i] = 'a' + random(300) % 26;
 }
-
-void debugln(const String &s) {
-    SerialMon.println(s);
-}
-
-#ifdef USE_DEBUG
-#define DEBUG(s) debugln(s);
-#else
-#define DEBUG(S)
-#endif
-
 
 static void mqttCallback(char *topic, byte *payload, unsigned int len)
 {
@@ -250,9 +217,6 @@ void setup()
     // Set up wifi certificate
     client.setCACert(cert);
     client.setInsecure();
-#else
-    // Set up alarm thread
-    PT_INIT(&ptAlarm);
 #endif
 
     // Setup alarm settings
@@ -314,18 +278,16 @@ void loop()
         lastHealthPing = currentTime;
     }
 
-    // if (currentTime - lastGPSPing > GPS_UPDATE_INTERVAL_MS)
-    // {
-    //     if (modem.getGPS(&lat, &lon)) {
-    //         String location = String(lat) + "," + String(lon);
-    //         SerialMon.print(location);
-    //         mqtt.publish(topicGPS.c_str(), location.c_str());
-    //     }
-    //     else {
-    //         mqtt.publish(topicGPS.c_str(), "0,0");
-    //     }
-    //     lastGPSPing = currentTime;
-    // }
+#ifdef USE_WIFI_LOCATION
+    if (currentTime - lastGPSPing > GPS_UPDATE_INTERVAL_MS)
+    {
+        wifiScanComplete = Modem::getSurroundingWiFiJsonAsync(wifiLocation);
+        if (wifiScanComplete) {
+            mqtt.publish(topicWifiGPS.c_str(), wifiLocation.c_str());
+            lastGPSPing = currentTime;
+        }
+    }
+#endif
 
     if (lockStatus && motionDetected && ((currentTime - lastMotionPing) > MOTION_DETECTION_INTERVAL_MS))
     {
@@ -363,7 +325,6 @@ void loop()
     mqtt.loop();
 
 #ifndef USE_WIFI
-    PT_SCHEDULE(alarmThread(&ptAlarm));
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, LOW);
     esp_sleep_enable_timer_wakeup(0.05 * S_TO_US);
     esp_light_sleep_start();
