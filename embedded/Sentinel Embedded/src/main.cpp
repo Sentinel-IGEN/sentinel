@@ -8,7 +8,6 @@
 #include <Wire.h>
 #include <ctype.h>
 #include <secrets.h>
-#include <WiFi.h>
 #include <WiFiClientSecure.h>
 
 /*********************************************
@@ -21,6 +20,7 @@
 #define USE_WIFI
 #define USE_IMU
 #define USE_WIFI_LOCATION
+#define USE_ALARM
 
 // Misc
 #define S_TO_US 1000000
@@ -44,11 +44,14 @@
 // GPS
 #define GPS_UPDATE_INTERVAL_MS 30 * S_TO_MS
 
+// MQTT
+#define MQTT_BUFFER_SIZE 3000
+
 // Debug macro
 #ifdef USE_DEBUG
 #define DEBUG(s) SerialMon.println(s);
 #else
-#define DEBUG(S) (...);
+#define DEBUG(S) 
 #endif
 
 /*********************************************
@@ -69,10 +72,10 @@ String topicGPS = String("gps/") + DEVICE_NAME;
 String topicWifiGPS = String("wifi_gps/") + DEVICE_NAME;
 
 // LTE Modem and wifi
-TinyGsm modem(SerialAT);
 #ifdef USE_WIFI
 WiFiClientSecure client;
 #else
+TinyGsm modem(SerialAT);
 TinyGsmClientSecure client(modem);
 #endif
 PubSubClient mqtt(client);
@@ -126,6 +129,9 @@ static void generateUniqueID()
         mqttClientID[i] = 'a' + random(300) % 26;
 }
 
+/**
+ * MQTT callback
+ */
 static void mqttCallback(char *topic, byte *payload, unsigned int len)
 {
     String data = String((char *)payload, len);
@@ -157,6 +163,7 @@ static void mqttCallback(char *topic, byte *payload, unsigned int len)
         String response = String(motionDetectionThreshold);
         mqtt.publish(topicMotionThresholdStatus.c_str(), response.c_str());
     }
+#ifdef USE_ALARM
     else if (topicString == topicAlarmRequest)
     {
         bool command = doc["command"];
@@ -168,6 +175,7 @@ static void mqttCallback(char *topic, byte *payload, unsigned int len)
         }
         alarmStatus = false;
     }
+#endif
 }
 
 /**
@@ -184,11 +192,12 @@ bool mqttConnect()
         delay(500);
         Serial.print(".");
     }
+    Serial.println("Connected!");
 #else
     Modem::initialize(modem, true);
 #endif
 
-    delay(2000);
+    delay(1000);
 
     DEBUG("Connecting to " + String(MQTT_BROKER) + " with client ID: " + mqttClientID + " and user " + MQTT_USER)
     bool mqttConnected = mqtt.connect(mqttClientID, MQTT_USER, MQTT_PASSWORD, "device_health/device1", 2, false, "0", true);
@@ -219,8 +228,10 @@ void setup()
     client.setInsecure();
 #endif
 
+#ifdef USE_ALARM
     // Setup alarm settings
     pinMode(ALARM_PIN, OUTPUT);
+#endif
 
 #ifdef USE_IMU
     // IMU setup
@@ -246,12 +257,13 @@ void setup()
     // Setup motion interrupt
     pinMode(32, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(32), handleMotionDetection, HIGH);
+#endif
 
-    // MQTT setup
+   // MQTT setup
     mqtt.setServer(MQTT_BROKER, 8883);
     mqtt.setCallback(mqttCallback);
     mqtt.setKeepAlive(30);
-#endif
+    mqtt.setBufferSize(MQTT_BUFFER_SIZE);
 
     // GPS Setup
     // Modem::enableGPS(modem);
@@ -283,6 +295,7 @@ void loop()
     {
         wifiScanComplete = Modem::getSurroundingWiFiJsonAsync(wifiLocation);
         if (wifiScanComplete) {
+            DEBUG("WiFi Scan complete");
             mqtt.publish(topicWifiGPS.c_str(), wifiLocation.c_str());
             lastGPSPing = currentTime;
         }
@@ -304,7 +317,7 @@ void loop()
         motionDetected = false;
     }
 
-    // Alarm
+#ifdef USE_ALARM
     if (currentTime - lastAlarmTrigger > ALARM_RESET_INTERVAL_MS)
         alarmStatus = false;
 
@@ -321,6 +334,7 @@ void loop()
     {
         digitalWrite(ALARM_PIN, LOW);
     }
+#endif
 
     mqtt.loop();
 
